@@ -1,0 +1,80 @@
+.container {
+    width: 450px;
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    padding: 50px 50px;  /* mais respiro nas laterais */
+    border-radius: 10px;
+}
+
+.container h1 {
+    text-align: center;
+    font-size: 30px;
+    margin-bottom: 30px; /* mais espaço entre o título e o campo email */
+}
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fce4ec;
+}
+
+/* Label acima de cada campo */
+.input-field {
+    position: relative;
+    width: 100%;
+    margin: 25px auto; /* mais espaço entre os campos */
+}
+
+.input-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;  /* labels mais firmes visualmente */
+    color: #333;
+    padding-left: 4px;
+}
+
+.input-field input {
+    width: 100%;
+    height: 50px;
+    outline: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 40px;
+    font-size: 16px;
+    padding: 0 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    transition: border 0.2s;
+}
+
+/* borda vermelha quando o campo for inválido */
+.input-field input.input-error {
+    border: 1.5px solid #e05c5c;
+    box-shadow: 0 0 8px rgba(224, 92, 92, 0.2);
+}
+
+/* mensagem de erro embaixo do campo */
+.error-message {
+    display: block;
+    margin-top: 6px;
+    padding-left: 4px;
+    font-size: 12px;
+    color: #e05c5c;
+}
+
+.container button {
+    width: 55%;        /* botão mais estreito */
+    height: 45px;      /* botão menos alto */
+    background-color: rgb(220, 170, 205);  /* rosa um pouco mais saturado */
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;                      /* texto do botão mais legível */
+    margin: 30px auto 0 auto;
+    display: block;
+}
