@@ -85,6 +85,17 @@ const Login = () => {
           <button type="submit">Entrar</button>
 
         </form>
+        {/* Link para cadastro */}
+        <div className="login-cadastro-link">
+          <span>Não tem uma conta? </span>
+          <button
+            className="login-cadastro-btn"
+            onClick={() => navigate('/cadastro')}
+            type="button"
+          >
+            Cadastrar-se
+          </button>
+        </div>
       </div>
     </div>
   )
