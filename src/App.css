@@ -1,0 +1,20 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Helvetica;
+    box-sizing: border-box;
+    text-shadow: #000 1px 1 px;
+}
+
+body {
+    background-color: #fce4ec; /* fundo rosa em toda a página */
+    min-height: 100vh;
+}
+
+.App {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    /* sem background aqui */
+}
