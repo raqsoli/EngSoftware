@@ -35,8 +35,29 @@ const mockItems = [
 //     .then(data => setCollections(data))
 // }, [])
 // O back vai retornar uma lista com: id, name, owner, hearts, images
+const mockCollections = [
+  {
+    id: 1,
+    name: "McDonalds Maio 2025 (HK)",
+    owner: "Nome do Dono Coleção",
+    hearts: 2000,
+    images: [
+        "https://placehold.co/120x120/fce4ec/c2185b?text=HK+A",
+        "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+B",
+        "https://placehold.co/120x120/f48fb1/880e4f?text=HK+C",
+        "https://placehold.co/120x120/f06292/c2185b?text=HK+D",
+    ],
+  },
+  { id: 2, name: "Coleção 2", owner: "Dono 2", hearts: 340, images: [] },
+  { id: 3, name: "Coleção 3", owner: "Dono 3", hearts: 120, images: [] },
+  { id: 4, name: "Coleção 4", owner: "Dono 4", hearts: 88, images: [] },
+];
 
 //definir q vai aparecer inves de 2000 -> 2k (não muda com a vinda do back)
+function formatHearts(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "k";
+  return n;
+}
 
 // (não muda com a vinda do back) ela se baseia no que o filled recebe, filled true coracao cheio, filled false coracao vazio, codigo do path é as coordernadas do icon
 function HeartIcon({ filled }) {
@@ -91,10 +112,7 @@ function ItemCard({ item }) {
         </div>
         <button
           className="heart-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setFavorited(!favorited);
-          }}
+          onClick={() => setFavorited(!favorited)}
           aria-label={favorited ? "Desfavoritar" : "Favoritar"}
         >
           <HeartIcon filled={favorited} />
@@ -103,6 +121,56 @@ function ItemCard({ item }) {
     </div>
   );
 }
+
+// Card de cada coleção — recebe os dados da coleção como prop
+function CollectionCard({ collection }) {
+    // favorited: controla visualmente se o coração está cheio ou vazio
+    // TODO: quando o back estiver pronto, o valor inicial virá da API
+  const [favorited, setFavorited] = useState(false);
+  const navigate = useNavigate();
+    //collection.images são do back
+  return (
+    <div
+      className="collection-card"
+      // Ao clicar na coleção, navega para a página da coleção
+      // TODO: a página /colecao/:id vai buscar os dados dessa coleção no back
+      onClick={() => navigate(`/colecao/${collection.id}`)}
+    >
+      {collection.images.length > 0 ? (
+        <div className="collection-img-grid">
+          {collection.images.slice(0, 4).map((img, i) => (
+            <img key={i} src={img} alt="" />
+          ))}
+        </div>
+      ) : (
+        // Exibe um bloco vazio quando não há imagens ainda
+        <div className="collection-empty" />
+      )}
+
+      <div className="collection-card-info">
+        <div>
+            {/* collection.name e collection.owner: dados que virão do back */}
+          <p className="collection-card-name">{collection.name}</p>
+          <p className="collection-card-owner">{collection.owner}</p>
+        </div>
+        <div className="collection-hearts">
+          <button
+            className="heart-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFavorited(!favorited); //so muda o coracao na tela
+              //fetch('url-da-api/favoritar/colecao/' + collection.id, { method: 'POST' }) // novo: avisa o banco
+            }}
+            aria-label={favorited ? "Desfavoritar" : "Favoritar"} //acessibilidade?
+          >
+            <HeartIcon filled={favorited} />
+          </button>
+          <span className="hearts-count">{formatHearts(collection.hearts)}</span>
+        </div>
+      </div>
+    </div>
+  );
+} //o valor de collection hearts ali de cima hoje vem do mock mas depois vai vir do back
 
 // Componente de scroll horizontal com seta
 // useRef: mantém referência da div para controlar o scroll programaticamente
@@ -175,8 +243,19 @@ export default function HomePage() {
         <section className="section">
           <h2 className="section-title">Itens Populares</h2>
           <HorizontalScroll>
+            {/* TODO: trocar mockItems por items vindo da API */}
             {mockItems.map((item) => (
               <ItemCard key={item.id} item={item} />
+            ))}
+          </HorizontalScroll>
+        </section>
+
+        <section className="section">
+          <h2 className="section-title">Coleções Populares</h2>
+          <HorizontalScroll>
+            {/* TODO: trocar mockCollections por collections vindo da API */}
+            {mockCollections.map((col) => (
+              <CollectionCard key={col.id} collection={col} />
             ))}
           </HorizontalScroll>
         </section>
