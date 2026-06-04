@@ -1,0 +1,185 @@
+/* ── Página geral ── */
+.item-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+/* ── Cabeçalho ── */
+.item-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #555;
+}
+
+/* ── Conteúdo principal ── */
+.item-page-main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── Informações do topo ── */
+.item-top-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.item-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 4px 0;
+}
+
+.item-collection {
+  cursor: pointer;
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.item-collection:hover {
+  text-decoration: underline;
+}
+
+/* ── Dono da coleção ── */
+.item-owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.item-owner:hover .item-owner-name {
+  text-decoration: underline;
+}
+
+.item-owner-name {
+  font-size: 12px;
+  color: #555;
+}
+
+.item-owner-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+/* ── Galeria de imagens ── */
+.item-gallery {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.item-gallery-image {
+  width: 100%;
+  max-width: 320px;
+  height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* ── Seta da galeria ── */
+.gallery-arrow {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  color: #555;
+}
+
+/* ── Botão de favoritar ── */
+.item-heart-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Pontos indicadores ── */
+.gallery-dots {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.gallery-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.gallery-dot.active {
+  background-color: #e91e8c;
+}
+
+/* ── Descrição ── */
+.item-description {
+  margin-top: 24px;
+}
+
+.item-description-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.item-description-box {
+  width: 100%;
+  min-height: 80px;
+  background-color: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: #555;
+  box-sizing: border-box;
+}
