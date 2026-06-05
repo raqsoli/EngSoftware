@@ -1,0 +1,230 @@
+/* ── Página geral ── */
+.edit-item-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+/* ── Cabeçalho ── */
+.edit-item-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.edit-item-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #555;
+}
+
+/* ── Conteúdo principal ── */
+.edit-item-main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.edit-item-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+/* ── Card principal ── */
+.edit-item-card {
+  background-color: #f7f7f7;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+/* ── Grid de imagens ── */
+.edit-item-images-section {
+  flex-shrink: 0;
+}
+
+.edit-item-images-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 140px);
+  gap: 10px;
+}
+
+.edit-item-image-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.edit-item-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* ── Botão remover imagem ── */
+.edit-item-remove-img-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #e91e8c;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.edit-item-remove-img-btn:hover {
+  background: #fff;
+}
+
+/* ── Botão adicionar imagem ── */
+.edit-item-add-img-btn {
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  background-color: #efefef;
+  border: 1.5px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.edit-item-add-img-btn:hover {
+  border-color: #e91e8c;
+}
+
+/* ── Campos de edição ── */
+.edit-item-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-item-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.edit-item-input {
+  height: 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.edit-item-input:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Dropdown de coleção ── */
+.edit-item-select-wrap {
+  position: relative;
+}
+
+.edit-item-select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  appearance: none;
+  cursor: pointer;
+}
+
+.edit-item-select:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Textarea descrição ── */
+.edit-item-textarea {
+  height: 100px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  resize: none;
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.edit-item-textarea:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Botão salvar ── */
+.edit-item-save-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.edit-item-save-btn {
+  background-color: #e91e8c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.edit-item-save-btn:hover {
+  background-color: #c2185b;
+}
+
+.edit-item-error {
+  font-size: 12px;
+  color: #e91e8c;
+  margin: 4px 0 0 0;
+}
+
+.input-error {
+  border-color: #e91e8c;
+}

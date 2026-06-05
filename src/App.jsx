@@ -5,6 +5,7 @@ import HomePage from './Components/HomePage/HomePage'
 import ItemPage from './Components/ItemPage/ItemPage'
 import UserProfilePage from './Components/UserProfilePage/UserProfilePage'
 import EditarPerfil from './Components/EditarPerfil/EditarPerfil'
+import EditarItem from './Components/EditarItem/EditarItem'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/item/:id" element={<ItemPage />} />
         <Route path="/perfil/:id" element={<UserProfilePage />} />
         <Route path="/editar-perfil" element={<EditarPerfil />} />
+        <Route path="/editar-item/:id" element={<EditarItem />} />
       </Routes>
     </BrowserRouter>
   )
