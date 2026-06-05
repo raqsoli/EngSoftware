@@ -3,6 +3,7 @@ import Login from './Components/Login/Login'
 import CadastroUsuario from './Components/CadastroUsuario/CadastroUsuario'
 import HomePage from './Components/HomePage/HomePage'
 import ItemPage from './Components/ItemPage/ItemPage'
+import UserProfilePage from './Components/UserProfilePage/UserProfilePage'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/cadastro" element={<CadastroUsuario />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/item/:id" element={<ItemPage />} />
+        <Route path="/perfil/:id" element={<UserProfilePage />} />
       </Routes>
     </BrowserRouter>
   )

@@ -90,7 +90,6 @@ export default function ItemPage() {
           {/* TODO: criar a página /perfil/:id e linkar aqui */}
           <div
             className="item-owner"
-            onClick={() => navigate(`/perfil/${mockItem.owner.id}`)}
           >
             <span className="item-owner-name">{mockItem.owner.name}</span>
             <img

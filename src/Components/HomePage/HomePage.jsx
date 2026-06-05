@@ -198,6 +198,8 @@ function HorizontalScroll({ children }) {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <div className="homepage">
       {/* Navbar fixa no topo*/}
@@ -205,7 +207,7 @@ export default function HomePage() {
 
         {/* Avatar do usuário logado */}
         {/* TODO: quando o back estiver pronto, exibir a foto real do usuário */}
-        <div className="navbar-avatar">
+        <div className="navbar-avatar" onClick={() => navigate('/perfil/1')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
