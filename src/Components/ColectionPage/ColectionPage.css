@@ -1,0 +1,165 @@
+/* ── Página geral ── */
+.collection-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+/* ── Cabeçalho: seta + título lado a lado ── */
+.collection-page-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+
+/* ── Botão de voltar ── */
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #555;
+}
+
+/* ── Conteúdo principal ── */
+.collection-page-main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── Informações do topo ── */
+.collection-top-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.collection-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collection-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+/* ── Botão de favoritar ── */
+.collection-heart-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Dono da coleção ── */
+.collection-owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* cursor: pointer; — habilitar quando a página de perfil de outro usuário estiver pronta */
+}
+
+.collection-owner-name {
+  font-size: 12px;
+  color: #555;
+}
+
+.collection-owner-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+/* ── Grid de itens ── */
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+/* Card com fundo branco, borda e sombra — estilo da foto de referência */
+.collection-item-card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 8px;
+  background-color: #ffffff;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.collection-item-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Wrapper da imagem para fundo levemente cinza dentro do card */
+.collection-item-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fafafa;
+}
+
+.collection-item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.collection-item-name {
+  font-size: 11px;
+  color: #444;
+  line-height: 1.4;
+  padding: 0 2px;
+}
+
+/* ── Descrição ── */
+.collection-description {
+  margin-top: 8px;
+}
+
+.collection-description-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.collection-description-box {
+  width: 100%;
+  min-height: 80px;
+  background-color: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: #555;
+  box-sizing: border-box;
+}
