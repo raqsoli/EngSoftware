@@ -81,7 +81,6 @@ export default function ItemPage() {
             <h2 className="item-name">{mockItem.name}</h2>
             <p className="item-collection"
             // Ao clicar na coleção, navega para a página da coleção
-            // TODO: criar a página /colecao/:id e linkar aqui
             onClick={() => navigate(`/colecao/${mockItem.collectionId}`)}> Coleção: {mockItem.collection}</p>
           </div>
 
@@ -90,6 +89,8 @@ export default function ItemPage() {
           {/* TODO: criar a página /perfil/:id e linkar aqui */}
           <div
             className="item-owner"
+            onClick={() => navigate(`/perfil-usuario/${mockItem.owner.id}`)}
+            style={{ cursor: "pointer" }}
           >
             <span className="item-owner-name">{mockItem.owner.name}</span>
             <img

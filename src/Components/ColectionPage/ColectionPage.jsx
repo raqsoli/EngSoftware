@@ -92,7 +92,11 @@ export default function CollectionPage() {
           {/* TODO: quando a página de perfil de outro usuário estiver pronta,
                trocar o comentário abaixo e habilitar o navigate:
                onClick={() => navigate(`/perfil/${mockCollection.owner.id}`)} */}
-          <div className="collection-owner">
+          <div 
+            className="collection-owner"
+            onClick={() => navigate(`/perfil-usuario/${mockCollection.owner.id}`)}
+            style={{ cursor: "pointer" }}
+          >
             <span className="collection-owner-name">{mockCollection.owner.name}</span>
             <img
               className="collection-owner-avatar"
