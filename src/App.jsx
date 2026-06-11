@@ -8,6 +8,7 @@ import EditarPerfil from './Components/EditarPerfil/EditarPerfil'
 import EditarItem from './Components/EditarItem/EditarItem'
 import EditarColecao from './Components/EditarColecao/EditarColecao'
 import CollectionPage from './Components/ColectionPage/ColectionPage'
+import PerfilOutroUsuario from './Components/PerfilOutroUsuario/PerfilOutroUsuario'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/editar-item/:id" element={<EditarItem />} />
         <Route path="/editar-colecao/:id" element={<EditarColecao />} />
         <Route path="/colecao/:id" element={<CollectionPage />} />
+        <Route path="/perfil-usuario/:id" element={<PerfilOutroUsuario />} />
       </Routes>
     </BrowserRouter>
   )
