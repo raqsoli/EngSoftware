@@ -1,2 +1,14 @@
 node_modules/
 dist/
+
+# Python
+backend/venv/
+backend/db.sqlite3
+**/__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Variáveis de ambiente
+.env
