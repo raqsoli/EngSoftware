@@ -112,7 +112,10 @@ function ItemCard({ item }) {
         </div>
         <button
           className="heart-btn"
-          onClick={() => setFavorited(!favorited)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFavorited(!favorited);
+          }}
           aria-label={favorited ? "Desfavoritar" : "Favoritar"}
         >
           <HeartIcon filled={favorited} />
