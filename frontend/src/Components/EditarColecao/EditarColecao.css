@@ -174,20 +174,4 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-/* ── Botão adicionar item ── */
-.edit-collection-add-btn {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  background-color: #efefef;
-  border: 1.5px dashed #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
 
-.edit-collection-add-btn:hover {
-  border-color: #e91e8c;
-}
