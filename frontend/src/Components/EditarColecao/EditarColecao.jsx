@@ -143,16 +143,6 @@ export default function EditCollectionPage() {
 
               {/* Botão adicionar item — leva para página de criar item (ainda não implementada) */}
               {/* TODO: criar a página /adicionar-item e linkar aqui */}
-              <div
-                className="edit-collection-add-btn"
-                onClick={() => navigate("/adicionar-item")}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="16"/>
-                  <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-              </div>
             </div>
           </div>
 
