@@ -17,7 +17,6 @@ const mockCollection = {
   id: 1,
   name: "Hello Kitty - McDonalds 2025",
   description: "",
-  // TODO: items virão do back com os itens da coleção
   items: [
     { id: 1, image: "https://placehold.co/80x80/fce4ec/c2185b?text=HK+1" },
     { id: 2, image: "https://placehold.co/80x80/f8bbd0/ad1457?text=HK+2" },
@@ -25,41 +24,65 @@ const mockCollection = {
   ],
 };
 
+// TODO: substituir por verificação real com o token do usuário logado
+// O back valida se a coleção pertence ao usuário — aqui simulamos que é dono
+const mockIsOwner = true;
+
 export default function EditCollectionPage() {
   const navigate = useNavigate();
-  // TODO: usar o id para buscar a coleção correta na API
   const { id } = useParams();
 
-  // Estados dos campos
-  // TODO: quando o back estiver pronto, iniciar com os dados reais da coleção
   const [name, setName] = useState(mockCollection.name);
   const [description, setDescription] = useState(mockCollection.description);
 
-  // Estados de feedback
   const [nameSaved, setNameSaved] = useState(false);
   const [descriptionSaved, setDescriptionSaved] = useState(false);
 
-  // Estado de erro — nome não pode ser vazio
   const [nameError, setNameError] = useState("");
+
+  // Estados do modal de exclusão
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleSaveName = () => {
     setNameError("");
-
     if (name.trim() === "") {
       setNameError("O nome da coleção não pode ser vazio.");
       return;
     }
-
     // TODO: fetch('url-da-api/colecao/' + id + '/nome', { method: 'PUT', body: JSON.stringify({ name }) })
     setNameSaved(true);
     setTimeout(() => setNameSaved(false), 2000);
   };
 
   const handleSaveDescription = () => {
-    // descrição pode ser vazia — sem validação
     // TODO: fetch('url-da-api/colecao/' + id + '/descricao', { method: 'PUT', body: JSON.stringify({ description }) })
     setDescriptionSaved(true);
     setTimeout(() => setDescriptionSaved(false), 2000);
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteLoading(true);
+
+    // TODO: quando o back estiver pronto, substituir por chamada à API:
+    // fetch('url-da-api/colecao/' + id, { method: 'DELETE' })
+    //   .then(res => {
+    //     if (res.ok) {
+    //       setDeleteLoading(false);
+    //       setShowDeleteModal(false);
+    //       setDeleteSuccess(true);
+    //       setTimeout(() => navigate(-1), 2000);
+    //     }
+    //   })
+
+    // Por enquanto, simula o retorno de sucesso do back
+    setTimeout(() => {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeleteSuccess(true);
+      setTimeout(() => navigate(-1), 2000);
+    }, 1000);
   };
 
   return (
@@ -90,8 +113,10 @@ export default function EditCollectionPage() {
               className={`edit-collection-input ${nameError ? "input-error" : ""}`}
               type="text"
               value={name}
-              // TODO: valor inicial virá do back
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (e.target.value.trim() !== "") setNameError("");
+              }}
             />
             {nameError && <p className="edit-collection-error">{nameError}</p>}
             <div className="edit-collection-save-row">
@@ -107,7 +132,6 @@ export default function EditCollectionPage() {
             <textarea
               className="edit-collection-textarea"
               value={description}
-              // TODO: valor inicial virá do back
               onChange={(e) => setDescription(e.target.value)}
             />
             <div className="edit-collection-save-row">
@@ -121,11 +145,9 @@ export default function EditCollectionPage() {
           <div className="edit-collection-field">
             <label className="edit-collection-label">Itens</label>
             <div className="edit-collection-items-grid">
-              {/* TODO: trocar mockCollection.items por items vindo da API */}
               {mockCollection.items.map((item) => (
                 <div key={item.id} className="edit-collection-item-wrap">
                   <img src={item.image} alt={`Item ${item.id}`} />
-                  {/* TODO: botão de remover item da coleção — será implementado em outra issue */}
                   <button
                     className="edit-collection-remove-btn"
                     aria-label="Remover item"
@@ -140,14 +162,59 @@ export default function EditCollectionPage() {
                   </button>
                 </div>
               ))}
-
-              {/* Botão adicionar item — leva para página de criar item (ainda não implementada) */}
-              {/* TODO: criar a página /adicionar-item e linkar aqui */}
             </div>
           </div>
 
+          {/* Botão excluir — visível apenas para o dono da coleção */}
+          {/* TODO: mockIsOwner será substituído pela verificação real do token */}
+          {mockIsOwner && (
+            <div className="edit-collection-delete-row">
+              <button
+                className="edit-collection-delete-btn"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                excluir coleção
+              </button>
+            </div>
+          )}
+
         </div>
       </main>
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <p className="delete-modal-text">
+              Tem certeza que deseja excluir esta coleção? Essa ação não pode ser desfeita.
+            </p>
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+              >
+                cancelar
+              </button>
+              <button
+                className="delete-modal-confirm"
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "excluindo..." : "excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem de sucesso após exclusão */}
+      {deleteSuccess && (
+        <div className="delete-success-toast">
+          Coleção excluída com sucesso!
+        </div>
+      )}
+
     </div>
   );
 }
