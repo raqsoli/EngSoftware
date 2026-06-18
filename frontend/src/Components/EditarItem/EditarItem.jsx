@@ -2,17 +2,6 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./EditarItem.css";
 
-// ============================================================
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockItem e substituir por chamada à API:
-// const [item, setItem] = useState(null)
-// useEffect(() => {
-//   fetch('url-da-api/item/' + id)
-//     .then(res => res.json())
-//     .then(data => setItem(data))
-// }, [id])
-// O back vai retornar: id, name, collectionId, description, images
-// ============================================================
 const mockItem = {
   id: 1,
   name: "Hello Kitty - McDonalds 2025",
@@ -25,51 +14,48 @@ const mockItem = {
   ],
 };
 
-// ============================================================
-// TODO: remover mockCollections e substituir por chamada à API:
-// fetch('url-da-api/usuario/colecoes')
-// O back vai retornar: id, name
-// ============================================================
 const mockCollections = [
   { id: 1, name: "McDonalds" },
   { id: 2, name: "Sanrio" },
   { id: 3, name: "Disney" },
 ];
 
+// TODO: substituir por verificação real com o token do usuário logado
+// O back valida se o item pertence ao usuário — aqui simulamos que é dono
+const mockIsOwner = true;
+
 export default function EditItemPage() {
   const navigate = useNavigate();
-  // TODO: usar o id para buscar o item correto na API
   const { id } = useParams();
 
-  // Estados dos campos
-  // TODO: quando o back estiver pronto, iniciar com os dados reais do item
   const [name, setName] = useState(mockItem.name);
   const [collectionId, setCollectionId] = useState(mockItem.collectionId);
   const [description, setDescription] = useState(mockItem.description);
   const [images, setImages] = useState(mockItem.images);
 
-  // Estados de feedback
   const [nameSaved, setNameSaved] = useState(false);
   const [collectionSaved, setCollectionSaved] = useState(false);
   const [descriptionSaved, setDescriptionSaved] = useState(false);
 
-  // Remove uma imagem da lista pelo índice
+  const [nameError, setNameError] = useState("");
+
+  // Estados do modal de exclusão
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const handleRemoveImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  // Adiciona novas imagens pelo seletor de arquivos
-  // TODO: quando o back estiver pronto, enviar as imagens para a API
   const handleAddImages = (e) => {
     const files = Array.from(e.target.files);
     const newImages = files.map((file) => URL.createObjectURL(file));
     setImages([...images, ...newImages]);
   };
-  // estados de erro
-  const [nameError, setNameError] = useState("");
+
   const handleSaveName = () => {
     setNameError("");
-
     if (name.trim() === "") {
       setNameError("O nome do item não pode ser vazio.");
       return;
@@ -89,6 +75,29 @@ export default function EditItemPage() {
     // TODO: fetch('url-da-api/item/' + id + '/descricao', { method: 'PUT', body: JSON.stringify({ description }) })
     setDescriptionSaved(true);
     setTimeout(() => setDescriptionSaved(false), 2000);
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteLoading(true);
+
+    // TODO: quando o back estiver pronto, substituir por chamada à API:
+    // fetch('url-da-api/item/' + id, { method: 'DELETE' })
+    //   .then(res => {
+    //     if (res.ok) {
+    //       setDeleteLoading(false);
+    //       setShowDeleteModal(false);
+    //       setDeleteSuccess(true);
+    //       setTimeout(() => navigate(-1), 2000);
+    //     }
+    //   })
+
+    // Por enquanto, simula o retorno de sucesso do back
+    setTimeout(() => {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeleteSuccess(true);
+      setTimeout(() => navigate(-1), 2000);
+    }, 1000);
   };
 
   return (
@@ -118,13 +127,11 @@ export default function EditItemPage() {
               {images.map((img, i) => (
                 <div key={i} className="edit-item-image-wrap">
                   <img src={img} alt={`Imagem ${i + 1}`} />
-                  {/* Botão de remover imagem */}
                   <button
                     className="edit-item-remove-img-btn"
                     onClick={() => handleRemoveImage(i)}
                     aria-label="Remover imagem"
                   >
-                    {/* Ícone de lixeira */}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -135,8 +142,6 @@ export default function EditItemPage() {
                 </div>
               ))}
 
-              {/* Botão de adicionar imagem */}
-              {/* TODO: quando o back estiver pronto, enviar imagem para a API */}
               <label className="edit-item-add-img-btn" aria-label="Adicionar imagem">
                 <input
                   type="file"
@@ -164,11 +169,12 @@ export default function EditItemPage() {
                 className={`edit-item-input ${nameError ? "input-error" : ""}`}
                 type="text"
                 value={name}
-                // TODO: valor inicial virá do back
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (e.target.value.trim() !== "") setNameError("");
+                }}
               />
               {nameError && <p className="edit-item-error">{nameError}</p>}
-              
               <div className="edit-item-save-row">
                 <button className="edit-item-save-btn" onClick={handleSaveName}>
                   {nameSaved ? "salvo!" : "salvar"}
@@ -176,14 +182,13 @@ export default function EditItemPage() {
               </div>
             </div>
 
-            {/* Campo Coleção — dropdown com coleções do usuário */}
+            {/* Campo Coleção */}
             <div className="edit-item-field">
               <label className="edit-item-label">Coleção</label>
               <div className="edit-item-select-wrap">
                 <select
                   className="edit-item-select"
                   value={collectionId}
-                  // TODO: opções virão da API com as coleções do usuário
                   onChange={(e) => setCollectionId(Number(e.target.value))}
                 >
                   {mockCollections.map((col) => (
@@ -206,7 +211,6 @@ export default function EditItemPage() {
               <textarea
                 className="edit-item-textarea"
                 value={description}
-                // TODO: valor inicial virá do back
                 onChange={(e) => setDescription(e.target.value)}
               />
               <div className="edit-item-save-row">
@@ -216,9 +220,57 @@ export default function EditItemPage() {
               </div>
             </div>
 
+            {/* Botão excluir — visível apenas para o dono do item */}
+            {/* TODO: mockIsOwner será substituído pela verificação real do token */}
+            {mockIsOwner && (
+              <div className="edit-item-delete-row">
+                <button
+                  className="edit-item-delete-btn"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  excluir item
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       </main>
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <p className="delete-modal-text">
+              Tem certeza que deseja excluir este item? Essa ação não pode ser desfeita.
+            </p>
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+              >
+                cancelar
+              </button>
+              <button
+                className="delete-modal-confirm"
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "excluindo..." : "excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem de sucesso após exclusão */}
+      {deleteSuccess && (
+        <div className="delete-success-toast">
+          Item excluído com sucesso!
+        </div>
+      )}
+
     </div>
   );
 }
