@@ -9,6 +9,7 @@ import EditarItem from './Components/EditarItem/EditarItem'
 import EditarColecao from './Components/EditarColecao/EditarColecao'
 import CollectionPage from './Components/ColectionPage/ColectionPage'
 import PerfilOutroUsuario from './Components/PerfilOutroUsuario/PerfilOutroUsuario'
+import Excluirconta from './Components/Excluirconta/Excluirconta'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/editar-colecao/:id" element={<EditarColecao />} />
         <Route path="/colecao/:id" element={<CollectionPage />} />
         <Route path="/perfil-usuario/:id" element={<PerfilOutroUsuario />} />
+        <Route path="/excluir-conta" element={<Excluirconta />} />
       </Routes>
     </BrowserRouter>
   )

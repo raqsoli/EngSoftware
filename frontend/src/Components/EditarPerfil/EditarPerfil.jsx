@@ -2,17 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./EditarPerfil.css";
 
-// ============================================================
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockUser e substituir por chamada à API:
-// const [user, setUser] = useState(null)
-// useEffect(() => {
-//   fetch('url-da-api/usuario/perfil')
-//     .then(res => res.json())
-//     .then(data => setUser(data))
-// }, [])
-// O back vai retornar: id, name, email, avatar
-// ============================================================
 const mockUser = {
   name: "AmoHelloKitty123",
   email: "AmoHelloKitty123@gmail.com",
@@ -22,25 +11,20 @@ const mockUser = {
 export default function EditProfilePage() {
   const navigate = useNavigate();
 
-  // Estados dos campos — hoje começam com os dados mockados
-  // TODO: quando o back estiver pronto, iniciar com os dados reais do usuário
   const [name, setName] = useState(mockUser.name);
   const [email, setEmail] = useState(mockUser.email);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  // Controla mensagens de feedback para o usuário
   const [nameSaved, setNameSaved] = useState(false);
   const [emailSaved, setEmailSaved] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
 
-  // estados de erro — mesmo padrão do Login.jsx
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [newPasswordError, setNewPasswordError] = useState("");
 
-  // mesma função de validação do Login.jsx
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -48,14 +32,11 @@ export default function EditProfilePage() {
 
   const handleSaveName = () => {
     setNameError("");
-
-    // Valida nome — não pode ser vazio
     if (name.trim() === "") {
       setNameError("O nome não pode ser vazio.");
       return;
     }
-    // TODO: quando o back estiver pronto, enviar para a API:
-    // fetch('url-da-api/usuario/nome', { method: 'PUT', body: JSON.stringify({ name }) })
+    // TODO: fetch('url-da-api/usuario/nome', { method: 'PUT', body: JSON.stringify({ name }) })
     setNameSaved(true);
     setTimeout(() => setNameSaved(false), 2000);
   };
@@ -66,8 +47,7 @@ export default function EditProfilePage() {
       setEmailError("Digite um email válido.");
       return;
     }
-    // TODO: quando o back estiver pronto, enviar para a API:
-    // fetch('url-da-api/usuario/email', { method: 'PUT', body: JSON.stringify({ email }) })
+    // TODO: fetch('url-da-api/usuario/email', { method: 'PUT', body: JSON.stringify({ email }) })
     setEmailSaved(true);
     setTimeout(() => setEmailSaved(false), 2000);
   };
@@ -87,10 +67,8 @@ export default function EditProfilePage() {
       setNewPasswordError("A nova senha deve conter pelo menos 1 letra maiúscula.");
       hasError = true;
     }
-
     if (hasError) return;
-    // TODO: quando o back estiver pronto, enviar para a API:
-    // fetch('url-da-api/usuario/senha', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })
+    // TODO: fetch('url-da-api/usuario/senha', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })
     setPasswordSaved(true);
     setCurrentPassword("");
     setNewPassword("");
@@ -100,7 +78,6 @@ export default function EditProfilePage() {
   return (
     <div className="edit-profile-page">
 
-      {/* Cabeçalho */}
       <header className="edit-profile-header">
         <button
           className="edit-profile-back-btn"
@@ -116,16 +93,12 @@ export default function EditProfilePage() {
 
       <main className="edit-profile-main">
 
-        {/* Avatar — funcionalidade de troca de foto será implementada depois */}
-        {/* TODO: adicionar troca de foto de perfil futuramente */}
         <div className="edit-profile-avatar-section">
           <img
             className="edit-profile-avatar"
             src={mockUser.avatar}
             alt="Foto de perfil"
           />
-          {/* Input oculto que abre o seletor de arquivos */}
-          {/* TODO: quando o back estiver pronto, enviar a imagem para a API */}
           <input
             type="file"
             id="avatar-input"
@@ -134,7 +107,6 @@ export default function EditProfilePage() {
             onChange={(e) => {
               const file = e.target.files[0];
               if (file) {
-                // mostra preview da imagem escolhida
                 const url = URL.createObjectURL(file);
                 document.querySelector(".edit-profile-avatar").src = url;
               }
@@ -148,48 +120,40 @@ export default function EditProfilePage() {
           </button>
         </div>
 
-        {/* Campo Nome */}
         <div className="edit-profile-field">
           <label className="edit-profile-label">Nome</label>
           <input
             className={`edit-profile-input ${nameError ? "input-error" : ""}`}
             type="text"
             value={name}
-            // TODO: valor inicial virá do back
             onChange={(e) => {
               setName(e.target.value);
-              if (e.target.value.trim() !== "") setNameError(""); // ← linha alterada
+              if (e.target.value.trim() !== "") setNameError("");
             }}
           />
           {nameError && <p className="edit-profile-error">{nameError}</p>}
-          <button
-            className="edit-profile-save-btn"
-            onClick={handleSaveName}
-          >
+          <button className="edit-profile-save-btn" onClick={handleSaveName}>
             {nameSaved ? "salvo!" : "salvar"}
           </button>
         </div>
 
-        {/* Campo Email */}
         <div className="edit-profile-field">
           <label className="edit-profile-label">Email</label>
           <input
             className={`edit-profile-input ${emailError ? "input-error" : ""}`}
             type="email"
             value={email}
-            // TODO: valor inicial virá do back
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError("");
+            }}
           />
           {emailError && <p className="edit-profile-error">{emailError}</p>}
-          <button
-            className="edit-profile-save-btn"
-            onClick={handleSaveEmail}
-          >
+          <button className="edit-profile-save-btn" onClick={handleSaveEmail}>
             {emailSaved ? "salvo!" : "salvar"}
           </button>
         </div>
 
-        {/* Seção Mudar Senha */}
         <div className="edit-profile-password-section">
           <h2 className="edit-profile-password-title">Mudar Senha</h2>
 
@@ -199,8 +163,10 @@ export default function EditProfilePage() {
               className={`edit-profile-input ${currentPasswordError ? "input-error" : ""}`}
               type="password"
               value={currentPassword}
-              // TODO: validar com o back se a senha atual está correta
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setCurrentPasswordError("");
+              }}
             />
             {currentPasswordError && <p className="edit-profile-error">{currentPasswordError}</p>}
           </div>
@@ -211,20 +177,29 @@ export default function EditProfilePage() {
               className={`edit-profile-input ${newPasswordError ? "input-error" : ""}`}
               type="password"
               value={newPassword}
-              placeholder=""
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setNewPasswordError("");
+              }}
             />
             {newPasswordError && <p className="edit-profile-error">{newPasswordError}</p>}
           </div>
 
           <div className="edit-profile-password-footer">
-            <button
-              className="edit-profile-change-btn"
-              onClick={handleChangePassword}
-            >
+            <button className="edit-profile-change-btn" onClick={handleChangePassword}>
               {passwordSaved ? "alterado!" : "mudar"}
             </button>
           </div>
+        </div>
+
+        {/* Botão excluir conta — redireciona para tela de confirmação */}
+        <div className="edit-profile-delete-row">
+          <button
+            className="edit-profile-delete-btn"
+            onClick={() => navigate("/excluir-conta")}
+          >
+            excluir conta
+          </button>
         </div>
 
       </main>
