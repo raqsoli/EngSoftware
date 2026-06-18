@@ -202,7 +202,18 @@ function HorizontalScroll({ children }) {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  // Estado do campo de busca da navbar
+  const [searchInput, setSearchInput] = useState("");
 
+  const handleSearch = () => {
+    const trimmed = searchInput.trim();
+    if (!trimmed) return;
+    navigate(`/busca?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
   return (
     <div className="homepage">
       {/* Navbar fixa no topo*/}
@@ -224,7 +235,17 @@ export default function HomePage() {
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input placeholder="O que você procura?" />
+          <input
+            placeholder="O que você procura?"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
+          <button className="navbar-search-submit" onClick={handleSearch} aria-label="Buscar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c2185b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         </div>
 
         {/* Botão de configurações */}
