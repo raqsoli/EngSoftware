@@ -35,6 +35,7 @@ export default function EditProfilePage() {
   const [passwordSaved, setPasswordSaved] = useState(false);
 
   // estados de erro — mesmo padrão do Login.jsx
+  const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [newPasswordError, setNewPasswordError] = useState("");
@@ -46,6 +47,13 @@ export default function EditProfilePage() {
   };
 
   const handleSaveName = () => {
+    setNameError("");
+
+    // Valida nome — não pode ser vazio
+    if (name.trim() === "") {
+      setNameError("O nome não pode ser vazio.");
+      return;
+    }
     // TODO: quando o back estiver pronto, enviar para a API:
     // fetch('url-da-api/usuario/nome', { method: 'PUT', body: JSON.stringify({ name }) })
     setNameSaved(true);
@@ -75,7 +83,11 @@ export default function EditProfilePage() {
     if (newPassword.length < 6) {
       setNewPasswordError("A nova senha deve ter pelo menos 6 caracteres.");
       hasError = true;
+    } else if (!/[A-Z]/.test(newPassword)) {
+      setNewPasswordError("A nova senha deve conter pelo menos 1 letra maiúscula.");
+      hasError = true;
     }
+
     if (hasError) return;
     // TODO: quando o back estiver pronto, enviar para a API:
     // fetch('url-da-api/usuario/senha', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })
@@ -140,12 +152,16 @@ export default function EditProfilePage() {
         <div className="edit-profile-field">
           <label className="edit-profile-label">Nome</label>
           <input
-            className="edit-profile-input"
+            className={`edit-profile-input ${nameError ? "input-error" : ""}`}
             type="text"
             value={name}
             // TODO: valor inicial virá do back
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (e.target.value.trim() !== "") setNameError(""); // ← linha alterada
+            }}
           />
+          {nameError && <p className="edit-profile-error">{nameError}</p>}
           <button
             className="edit-profile-save-btn"
             onClick={handleSaveName}
