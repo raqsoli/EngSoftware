@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import Collection
 from .serializers import CollectionSerializer
+from users.permissions import IsOwnerOrReadOnly
 
 
 class CollectionViewSet(viewsets.ModelViewSet):
@@ -10,7 +11,8 @@ class CollectionViewSet(viewsets.ModelViewSet):
     serializer_class = CollectionSerializer
 
     permission_classes = [
-        IsAuthenticatedOrReadOnly
+        IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
     ]
 
     def perform_create(self, serializer):
