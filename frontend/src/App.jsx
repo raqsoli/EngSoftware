@@ -11,7 +11,7 @@ import CollectionPage from './Components/ColectionPage/ColectionPage'
 import PerfilOutroUsuario from './Components/PerfilOutroUsuario/PerfilOutroUsuario'
 import Excluirconta from './Components/Excluirconta/Excluirconta'
 import BuscaItemColecao from './Components/BuscaItemColecao/BuscaItemColecao'
-import AdicionarItem from './Components/AdicionarItem/AdicionarItem'
+import Configuracoes from './Components/Configuracoes/Configuracoes'
 
 function App() {
   return (
@@ -28,8 +28,8 @@ function App() {
         <Route path="/colecao/:id" element={<CollectionPage />} />
         <Route path="/perfil-usuario/:id" element={<PerfilOutroUsuario />} />
         <Route path="/excluir-conta" element={<Excluirconta />} />
-        <Route path="/busca" element={<BuscaItemColecao />} /> 
-        <Route path="/adicionar-item" element={<AdicionarItem />} />               
+        <Route path="/busca" element={<BuscaItemColecao />} />              
+        <Route path="/configuracoes" element={<Configuracoes />} />
       </Routes>
     </BrowserRouter>
   )
