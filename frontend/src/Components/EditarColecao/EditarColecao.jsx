@@ -35,15 +35,21 @@ export default function EditCollectionPage() {
   const [name, setName] = useState(mockCollection.name);
   const [description, setDescription] = useState(mockCollection.description);
 
+  const [items, setItems] = useState(mockCollection.items);
+
   const [nameSaved, setNameSaved] = useState(false);
   const [descriptionSaved, setDescriptionSaved] = useState(false);
 
   const [nameError, setNameError] = useState("");
 
   // Estados do modal de exclusão
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteCollectionModal, setShowDeleteCollectionModal] = useState(false);
+  const [deleteCollectionSuccess, setDeleteCollectionSuccess] = useState(false);
+  const [deleteCollectionLoading, setDeleteCollectionLoading] = useState(false);
+
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [deleteItemSuccess, setDeleteItemSuccess] = useState(false);
+  const [deleteItemLoading, setDeleteItemLoading] = useState(false);
 
   const handleSaveName = () => {
     setNameError("");
@@ -62,26 +68,31 @@ export default function EditCollectionPage() {
     setTimeout(() => setDescriptionSaved(false), 2000);
   };
 
-  const handleConfirmDelete = () => {
-    setDeleteLoading(true);
+   const handleConfirmDeleteCollection = () => {
+    setDeleteCollectionLoading(true);
 
-    // TODO: quando o back estiver pronto, substituir por chamada à API:
-    // fetch('url-da-api/colecao/' + id, { method: 'DELETE' })
-    //   .then(res => {
-    //     if (res.ok) {
-    //       setDeleteLoading(false);
-    //       setShowDeleteModal(false);
-    //       setDeleteSuccess(true);
-    //       setTimeout(() => navigate(-1), 2000);
-    //     }
-    //   })
+    // TODO: fetch('url-da-api/colecao/' + id, { method: 'DELETE' })
 
-    // Por enquanto, simula o retorno de sucesso do back
     setTimeout(() => {
-      setDeleteLoading(false);
-      setShowDeleteModal(false);
-      setDeleteSuccess(true);
+      setDeleteCollectionLoading(false);
+      setShowDeleteCollectionModal(false);
+      setDeleteCollectionSuccess(true);
       setTimeout(() => navigate(-1), 2000);
+    }, 1000);
+  };
+
+
+  const handleConfirmDeleteItem = () => {
+    setDeleteItemLoading(true);
+
+    // TODO: fetch('url-da-api/colecao/' + id + '/item/' + itemToDelete, { method: 'DELETE' })
+
+    setTimeout(() => {
+      setItems(items.filter((it) => it.id !== itemToDelete)); // 🆕 remove o item da lista na tela
+      setDeleteItemLoading(false);
+      setItemToDelete(null); // 🆕 fecha o modal
+      setDeleteItemSuccess(true);
+      setTimeout(() => setDeleteItemSuccess(false), 2000); // 🆕 some o toast depois de 2s
     }, 1000);
   };
 
@@ -148,18 +159,21 @@ export default function EditCollectionPage() {
               {mockCollection.items.map((item) => (
                 <div key={item.id} className="edit-collection-item-wrap">
                   <img src={item.image} alt={`Item ${item.id}`} />
-                  <button
-                    className="edit-collection-remove-btn"
-                    aria-label="Remover item"
-                    disabled
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                      <path d="M10 11v6M14 11v6"/>
-                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                    </svg>
-                  </button>
+
+                  {mockIsOwner && (
+                    <button
+                      className="edit-collection-remove-btn"
+                      aria-label="Remover item"
+                      onClick={() => setItemToDelete(item.id)} // 🆕 antes não existia (era disabled)
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -171,7 +185,7 @@ export default function EditCollectionPage() {
             <div className="edit-collection-delete-row">
               <button
                 className="edit-collection-delete-btn"
-                onClick={() => setShowDeleteModal(true)}
+                onClick={() => setShowDeleteCollectionModal(true)}
               >
                 excluir coleção
               </button>
@@ -182,7 +196,7 @@ export default function EditCollectionPage() {
       </main>
 
       {/* Modal de confirmação de exclusão */}
-      {showDeleteModal && (
+      {showDeleteCollectionModal && (
         <div className="delete-modal-overlay">
           <div className="delete-modal">
             <p className="delete-modal-text">
@@ -191,27 +205,57 @@ export default function EditCollectionPage() {
             <div className="delete-modal-actions">
               <button
                 className="delete-modal-cancel"
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleteLoading}
+                onClick={() => setShowDeleteCollectionModal(false)}
+                disabled={deleteCollectionLoading}
               >
                 cancelar
               </button>
               <button
                 className="delete-modal-confirm"
-                onClick={handleConfirmDelete}
-                disabled={deleteLoading}
+                onClick={handleConfirmDeleteCollection}
+                disabled={deleteCollectionLoading}
               >
-                {deleteLoading ? "excluindo..." : "excluir"}
+                {deleteCollectionLoading ? "excluindo..." : "excluir"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mensagem de sucesso após exclusão */}
-      {deleteSuccess && (
+      {itemToDelete !== null && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <p className="delete-modal-text">
+              Tem certeza que deseja excluir este item da coleção? Essa ação não pode ser desfeita.
+            </p>
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-cancel"
+                onClick={() => setItemToDelete(null)}
+                disabled={deleteItemLoading}
+              >
+                cancelar
+              </button>
+              <button
+                className="delete-modal-confirm"
+                onClick={handleConfirmDeleteItem}
+                disabled={deleteItemLoading}
+              >
+                {deleteItemLoading ? "excluindo..." : "excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteCollectionSuccess && (
         <div className="delete-success-toast">
           Coleção excluída com sucesso!
+        </div>
+      )}
+      {deleteItemSuccess && ( // 🆕 NOVO — toast exclusivo do item
+        <div className="delete-success-toast">
+          Item excluído com sucesso!
         </div>
       )}
 

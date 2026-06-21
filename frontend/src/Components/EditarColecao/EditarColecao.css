@@ -169,9 +169,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: not-allowed;
-  color: #ccc;
+  cursor: pointer;
+  color: #e91e8c;
+  transition: background-color 0.15s;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.edit-collection-remove-btn:hover { /* ✅ NOVO — antes não tinha hover */
+  background: #fff;
 }
 
 /* ── Botão excluir coleção ── */
