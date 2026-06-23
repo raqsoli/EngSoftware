@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./UserProfilePage.css";
 
 // ============================================================
@@ -216,9 +216,37 @@ function FavoriteItemCard({ item }) {
 
 export default function UserProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Controla qual aba está ativa: "itens", "colecoes" ou "favoritos"
   const [activeTab, setActiveTab] = useState("itens");
+
+  // Lista de itens do usuário — começa com os mockados
+  // TODO: quando o back estiver pronto, carregar via:
+  // fetch('url-da-api/usuario/itens') e substituir mockItems
+  const [items, setItems] = useState(mockItems);
+
+  // Lista de coleções do usuário — começa com os mockados
+  // TODO: quando o back estiver pronto, carregar via:
+  // fetch('url-da-api/usuario/colecoes') e substituir mockCollections
+  const [collections, setCollections] = useState(mockCollections);
+
+  // Quando AdicionarItem ou AdicionarColecao navegam de volta passando state,
+  // o useEffect captura e adiciona na lista sem recarregar a página.
+  // TODO: quando o back estiver pronto, isso não será mais necessário —
+  // o POST já persiste no banco e a lista recarrega pela API.
+  useEffect(() => {
+    if (location.state?.newItem) {
+      setItems((prev) => [...prev, location.state.newItem]);
+    }
+    if (location.state?.newCollection) {
+      setCollections((prev) => [...prev, location.state.newCollection]);
+    }
+    // Limpa o state para não re-adicionar se o usuário navegar de volta
+    if (location.state?.newItem || location.state?.newCollection) {
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
 
   return (
     <div className="profile-page">
@@ -302,8 +330,8 @@ export default function UserProfilePage() {
             <p className="profile-section-title">Seus itens</p>
             {/* Grid vertical com todos os itens + card de adicionar */}
             <div className="profile-items-grid">
-              {/* TODO: trocar mockItems por items vindo da API */}
-              {mockItems.map((item) => (
+              {/* TODO: trocar items por dados vindo da API */}
+              {items.map((item) => (
                 <ItemCard key={item.id} item={item} />
               ))}
               {/* Card de adicionar item */}
@@ -328,8 +356,8 @@ export default function UserProfilePage() {
           <section className="profile-section">
             <p className="profile-section-title">Suas coleções</p>
             <div className="profile-items-grid">
-              {/* TODO: trocar mockCollections por collections vindo da API */}
-              {mockCollections.map((col) => (
+              {/* TODO: trocar collections por dados vindo da API */}
+              {collections.map((col) => (
                 <CollectionCard key={col.id} collection={col} />
               ))}
               {/* Card de adicionar coleção */}
