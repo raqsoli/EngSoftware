@@ -1,0 +1,265 @@
+/* ── Página geral ── */
+.add-item-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+/* ── Cabeçalho ── */
+.add-item-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.add-item-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #555;
+}
+
+/* ── Conteúdo principal ── */
+.add-item-main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.add-item-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+/* ── Card principal ── */
+.add-item-card {
+  background-color: #f7f7f7;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+/* ── Grid de imagens ── */
+.add-item-images-section {
+  flex-shrink: 0;
+}
+
+.add-item-images-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 140px);
+  gap: 10px;
+}
+
+.add-item-image-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.add-item-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* ── Botão remover imagem ── */
+.add-item-remove-img-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #e91e8c;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.add-item-remove-img-btn:hover {
+  background: #fff;
+}
+
+/* ── Botão adicionar imagem ── */
+.add-item-add-img-btn {
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  background-color: #efefef;
+  border: 1.5px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.add-item-add-img-btn:hover {
+  border-color: #e91e8c;
+}
+
+/* ── Campos do item ── */
+.add-item-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-item-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Asterisco de campo obrigatório */
+.add-item-required {
+  color: #e91e8c;
+  margin-left: 2px;
+}
+
+.add-item-input {
+  height: 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.add-item-input:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Dropdown de coleção ── */
+.add-item-select-wrap {
+  position: relative;
+}
+
+.add-item-select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  appearance: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.add-item-select:focus {
+  border-color: #e91e8c;
+}
+
+.add-item-select:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* ── Textarea descrição ── */
+.add-item-textarea {
+  height: 100px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  resize: none;
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.add-item-textarea:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Mensagens de erro e sucesso ── */
+.add-item-error {
+  font-size: 12px;
+  color: #e91e8c;
+  margin: 4px 0 0 0;
+}
+
+.add-item-server-error {
+  font-size: 13px;
+  color: #e91e8c;
+  text-align: center;
+  margin: 0;
+}
+
+.add-item-success {
+  font-size: 13px;
+  color: #2e7d32;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Borda vermelha nos inputs com erro — mesma classe usada nos outros componentes */
+.input-error {
+  border-color: #e91e8c;
+}
+
+/* ── Botão salvar ── */
+.add-item-save-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-item-save-btn {
+  background-color: #e91e8c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-item-save-btn:hover:not(:disabled) {
+  background-color: #c2185b;
+}
+
+/* Desabilitado: quando nome ou coleção ainda não preenchidos */
+.add-item-save-btn:disabled {
+  background-color: #f0a0cc;
+  cursor: not-allowed;
+}

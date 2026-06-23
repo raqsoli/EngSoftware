@@ -12,6 +12,7 @@ import PerfilOutroUsuario from './Components/PerfilOutroUsuario/PerfilOutroUsuar
 import Excluirconta from './Components/Excluirconta/Excluirconta'
 import BuscaItemColecao from './Components/BuscaItemColecao/BuscaItemColecao'
 import Configuracoes from './Components/Configuracoes/Configuracoes'
+import AdicionarItem from './Components/AdicionarItem/AdicionarItem'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/excluir-conta" element={<Excluirconta />} />
         <Route path="/busca" element={<BuscaItemColecao />} />              
         <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/adicionar-item" element={<AdicionarItem />} />
       </Routes>
     </BrowserRouter>
   )
