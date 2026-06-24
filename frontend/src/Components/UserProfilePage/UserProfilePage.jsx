@@ -111,8 +111,11 @@ function ItemCard({ item }) {
   );
 }
 
-function CollectionCard({ collection }) {
+function CollectionCard({ collection, variant = "edit" }) {
   const navigate = useNavigate();
+
+  //estado de favorito, só usado quando variant="favorite"
+  const [favorited, setFavorited] = useState(true);
 
   return (
     <div className="profile-collection-card" onClick={() => navigate(`/colecao/${collection.id}`)}>
@@ -130,21 +133,46 @@ function CollectionCard({ collection }) {
           <p className="profile-collection-name">{collection.name}</p>
           <p className="profile-collection-owner">{collection.owner}</p>
         </div>
+
         {/* Ícone de editar — leva para página de edição da coleção */}
         {/* TODO: criar a página /editar-colecao/:id */}
-        <button
-          className="profile-edit-icon-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/editar-colecao/${collection.id}`);
-          }}
-          aria-label="Editar coleção"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
+        {variant === "edit" ? (
+          <button
+            className="profile-edit-icon-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/editar-colecao/${collection.id}`);
+            }}
+            aria-label="Editar coleção"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        ) : (
+          // 🆕 NOVO — botão de coração, mesmo padrão do FavoriteItemCard
+          <button
+            className="profile-heart-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFavorited(!favorited);
+              // TODO: quando o back estiver pronto, chamar API para desfavoritar:
+              // fetch('url-da-api/desfavoritar/colecao/' + collection.id, { method: 'DELETE' })
+            }}
+            aria-label={favorited ? "Desfavoritar" : "Favoritar"}
+          >
+            {favorited ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#e91e8c">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -358,7 +386,7 @@ export default function UserProfilePage() {
             <div className="profile-items-grid">
               {/* TODO: trocar collections por dados vindo da API */}
               {collections.map((col) => (
-                <CollectionCard key={col.id} collection={col} />
+                <CollectionCard key={col.id} collection={col} variant="edit" />
               ))}
               {/* Card de adicionar coleção */}
               {/* TODO: criar a página /adicionar-colecao */}
@@ -396,7 +424,7 @@ export default function UserProfilePage() {
               <div className="profile-items-grid">
                 {/* TODO: trocar mockFavoriteCollections por favoriteCollections vindo da API */}
                 {mockFavoriteCollections.map((col) => (
-                  <CollectionCard key={col.id} collection={col} />
+                  <CollectionCard key={col.id} collection={col} variant="favorite" />
                 ))}
               </div>
             </section>
