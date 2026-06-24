@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/', include('collections_app.urls')),
     path('api/', include('items.urls')),
     path('api/', include('users.urls')),
+    path('api/', include('favorites.urls')),
 
     path(
         'api/token/',
