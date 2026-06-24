@@ -156,7 +156,7 @@ export default function EditCollectionPage() {
           <div className="edit-collection-field">
             <label className="edit-collection-label">Itens</label>
             <div className="edit-collection-items-grid">
-              {mockCollection.items.map((item) => (
+              {items.map((item) => (
                 <div key={item.id} className="edit-collection-item-wrap">
                   <img src={item.image} alt={`Item ${item.id}`} />
 
