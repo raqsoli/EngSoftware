@@ -1,0 +1,221 @@
+/* ── Página geral ── */
+.add-collection-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+/* ── Cabeçalho ── */
+.add-collection-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.add-collection-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: #555;
+}
+
+/* ── Conteúdo principal ── */
+.add-collection-main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.add-collection-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+/* ── Card principal ── */
+.add-collection-card {
+  background-color: #f7f7f7;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Campos ── */
+.add-collection-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-collection-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.add-collection-input {
+  height: 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.add-collection-input:focus {
+  border-color: #e91e8c;
+}
+
+.add-collection-textarea {
+  height: 100px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  resize: none;
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.add-collection-textarea:focus {
+  border-color: #e91e8c;
+}
+
+/* ── Erro ── */
+.add-collection-error {
+  font-size: 12px;
+  color: #e91e8c;
+  margin: 2px 0 0 0;
+}
+
+.input-error {
+  border-color: #e91e8c !important;
+}
+
+/* ── Grid de itens ── */
+.add-collection-items-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Miniatura de item já adicionado */
+.add-collection-item-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.add-collection-item-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Botão remover item */
+.add-collection-remove-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #e91e8c;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.15s;
+}
+
+.add-collection-remove-btn:hover {
+  background: #fff;
+}
+
+/* Botão adicionar item — mesmo estilo do "+" de AdicionarItem */
+.add-collection-add-item-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  border: 1.5px dashed #ccc;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.add-collection-add-item-btn:hover {
+  border-color: #e91e8c;
+}
+
+/* ── Botão salvar ── */
+.add-collection-save-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-collection-save-btn {
+  background-color: #e91e8c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.add-collection-save-btn:hover:not(:disabled) {
+  background-color: #c2185b;
+}
+
+.add-collection-save-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Toast de sucesso ── */
+.add-collection-success-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2e7d32;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 200;
+  white-space: nowrap;
+}

@@ -13,6 +13,7 @@ import Excluirconta from './Components/Excluirconta/Excluirconta'
 import BuscaItemColecao from './Components/BuscaItemColecao/BuscaItemColecao'
 import Configuracoes from './Components/Configuracoes/Configuracoes'
 import AdicionarItem from './Components/AdicionarItem/AdicionarItem'
+import AdicionarColecao from './Components/AdicionarColecao/AdicionarColecao'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/busca" element={<BuscaItemColecao />} />              
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/adicionar-item" element={<AdicionarItem />} />
+        <Route path="/adicionar-colecao" element={<AdicionarColecao />} />
       </Routes>
     </BrowserRouter>
   )
