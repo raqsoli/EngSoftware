@@ -31,4 +31,4 @@ class FavoriteCollection(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'collection')
+        unique_together = ('user', 'collection') # Impede que o usuário favorite duas vezes o mesmo item ou coleção
