@@ -21,25 +21,30 @@ const mockCollections = [
   { id: 3, name: "Disney" },
 ];
 
+const MAX_IMAGES = 3;
+
 export default function AdicionarItem() {
   const navigate = useNavigate();
 
   // Estados dos campos
+
   const [name, setName] = useState("");
   const [collectionId, setCollectionId] = useState("");
   const [description, setDescription] = useState("");
+
   const [images, setImages] = useState([]);
 
-  // Estado de feedback
   const [saved, setSaved] = useState(false);
 
   // Estados de erro
   const [nameError, setNameError] = useState("");
   const [collectionError, setCollectionError] = useState("");
+  const [imageError, setImageError] = useState("");
 
   // Remove uma imagem da lista pelo índice
   const handleRemoveImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
+    setImageError("");
   };
 
   // Adiciona novas imagens pelo seletor de arquivos
@@ -48,11 +53,27 @@ export default function AdicionarItem() {
   // separado de upload que retorne as URLs definitivas)
   const handleAddImages = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file) => URL.createObjectURL(file));
+
+    // 🆕 NOVO — valida o limite de 3 imagens antes de adicionar
+    if (images.length + files.length > MAX_IMAGES) {
+      setImageError(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
+      e.target.value = ""; // reseta o input pra poder selecionar de novo
+      return;
+    }
+
+    setImageError("");
+
+    // 🆕 ALTERADO — antes: files.map((file) => URL.createObjectURL(file))
+    // AGORA: guarda o file E a preview juntos
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
     setImages([...images, ...newImages]);
+    e.target.value = ""; // permite selecionar o mesmo arquivo de novo se remover e readicionar
   };
 
-  // Botão só habilita com nome + coleção preenchidos
   const canSave = name.trim() !== "" && collectionId !== "";
 
   const handleSave = () => {
@@ -71,24 +92,24 @@ export default function AdicionarItem() {
     }
     if (hasError) return;
 
-    // TODO: substituir pelo fetch real quando o back estiver pronto:
-    // const formData = new FormData();
-    // formData.append('name', name.trim());
-    // formData.append('description', description.trim());
-    // formData.append('collection', Number(collectionId));
-    // images.forEach((img) => formData.append('images', img.file));
-    //
+    // pronta pra usar quando o endpoint estiver no ar
+    const formData = new FormData();
+    formData.append('name', name.trim());
+    formData.append('description', description.trim());
+    formData.append('collection', Number(collectionId));
+    images.forEach((img) => formData.append('images', img.file)); // 🆕 envia o File real
+
+    // TODO: descomentar quando o back estiver pronto:
     // fetch('url-da-api/items/', {
     //   method: 'POST',
     //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
-    //   body: formData,
+    //   body: formData, // não definir Content-Type manualmente — o navegador faz isso
     // })
     //   .then(res => res.json())
     //   .then(newItem => {
     //     setSaved(true);
     //     setTimeout(() => navigate(-1, { state: { newItem } }), 600);
     //   })
-    // O back retorna o item criado com o id gerado em caso de sucesso.
 
     const collectionName = mockCollections.find(c => String(c.id) === String(collectionId))?.name ?? "";
 
@@ -99,7 +120,7 @@ export default function AdicionarItem() {
       collection: collectionName,
       description: description.trim(),
       images: images.length > 0
-        ? images
+        ? images.map((img) => img.preview)
         : ["https://placehold.co/120x120/fce4ec/c2185b?text=Novo"],
     };
 
@@ -137,7 +158,7 @@ export default function AdicionarItem() {
             <div className="add-item-images-grid">
               {images.map((img, i) => (
                 <div key={i} className="add-item-image-wrap">
-                  <img src={img} alt={`Imagem ${i + 1}`} />
+                  <img src={img.preview} alt={`Imagem ${i + 1}`} />
                   {/* Botão de remover imagem */}
                   <button
                     className="add-item-remove-img-btn"
@@ -156,22 +177,25 @@ export default function AdicionarItem() {
               ))}
 
               {/* Botão de adicionar imagem */}
-              {/* TODO: quando o back estiver pronto, enviar imagem para a API */}
-              <label className="add-item-add-img-btn" aria-label="Adicionar imagem">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={handleAddImages}
-                />
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-              </label>
+              {images.length < MAX_IMAGES && (
+                <label className="add-item-add-img-btn" aria-label="Adicionar imagem">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: "none" }}
+                    onChange={handleAddImages}
+                  />
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                </label>
+              )}
             </div>
+            {/*mensagem de erro de limite de imagens */}
+            {imageError && <p className="add-item-error">{imageError}</p>}
           </div>
 
           {/* Campos do item */}
