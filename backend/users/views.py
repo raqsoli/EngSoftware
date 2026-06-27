@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 from .serializers import (
     RegisterSerializer,
     ProfileSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
+    DeleteAccountSerializer
 )
 
 
@@ -67,15 +68,35 @@ class ChangePasswordView(APIView):
             }
         )
     
-class DeleteAccountView(APIView):
+class DeleteAccountView(generics.DestroyAPIView):
+
+    serializer_class = DeleteAccountSerializer
 
     permission_classes = [
         IsAuthenticated
     ]
 
-    def delete(self, request):
+    def get_object(self):
+        return self.request.user
 
-        request.user.delete()
+    def destroy(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = self.get_object()
+
+        if not user.check_password(
+            serializer.validated_data["password"]
+        ):
+            return Response(
+                {
+                    "error": "Senha incorreta."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.delete()
 
         return Response(
             {
