@@ -136,3 +136,7 @@ SIMPLE_JWT = {
 
 LOGIN_REDIRECT_URL = "/api/"
 LOGOUT_REDIRECT_URL = "/api/"
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
