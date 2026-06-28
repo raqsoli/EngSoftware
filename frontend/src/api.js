@@ -45,17 +45,18 @@ export function isAuthenticated() {
 // 3. Não define Content-Type quando o body é FormData (upload de imagem) —
 //    o navegador precisa definir esse header sozinho com o boundary correto
 export async function apiFetch(path, options = {}) {
-  const token = getAccessToken();
-  const isFormData = options.body instanceof FormData;
+  const { skipAuth = false, ...fetchOptions } = options;
+  const token = skipAuth ? null : getAccessToken();
+  const isFormData = fetchOptions.body instanceof FormData;
 
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
-    ...options.headers,
+    ...fetchOptions.headers,
   };
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    ...fetchOptions,
     headers,
   });
 
