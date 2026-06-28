@@ -1,40 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch, salvarTokens } from "../../api"; //ajuste o caminho conforme onde você colocar api.js
 import "./CadastroUsuario.css";
 
 export default function Cadastro() {
   const navigate = useNavigate();
 
-  // Estados dos campos
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Estados de visibilidade da senha
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Estados de erro — mesmo padrão do Login.jsx
   const [usernameError, setUsernameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  // Erro retornado pelo back — ex: email já cadastrado
-  // TODO: quando o back estiver pronto, preencher esse estado com o erro da API
   const [serverError, setServerError] = useState("");
 
-  // Mesma função de validação do Login.jsx
+  // true enquanto espera a resposta do back
+  const [loading, setLoading] = useState(false);
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Reseta todos os erros antes de validar
     setUsernameError("");
     setEmailError("");
     setPasswordError("");
@@ -43,19 +40,16 @@ export default function Cadastro() {
 
     let hasError = false;
 
-    // Valida nome de usuário — não pode ser vazio
     if (username.trim() === "") {
       setUsernameError("Digite um nome de usuário.");
       hasError = true;
     }
 
-    // Valida formato do email — mesmo padrão do Login.jsx
     if (!validateEmail(email)) {
       setEmailError("Digite um email válido.");
       hasError = true;
     }
 
-    // Valida senha — mínimo 6 caracteres e pelo menos 1 letra maiúscula
     if (password.length < 6) {
       setPasswordError("A senha deve ter pelo menos 6 caracteres.");
       hasError = true;
@@ -64,34 +58,64 @@ export default function Cadastro() {
       hasError = true;
     }
 
-    // Valida confirmação de senha
     if (confirmPassword !== password) {
       setConfirmPasswordError("As senhas não coincidem.");
       hasError = true;
     }
 
-    // Se houver erro, interrompe e não envia
     if (hasError) return;
 
-    // TODO: quando o back estiver pronto, substituir por chamada à API:
-    // fetch('url-da-api/cadastro', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ username, email, password })
-    // })
-    // .then(res => {
-    //   if (res.status === 409) {
-    //     setServerError("Este email já está cadastrado.");
-    //     return;
-    //   }
-    //   navigate('/home');
-    // })
+    //  bloco inteiro: chamada real ao back, antes era TODO + navigate direto
+    setLoading(true);
 
-    // Por enquanto, navega direto para a homepage
-    navigate("/home");
+    try {
+      const response = await apiFetch("/api/register/", {
+        method: "POST",
+        skipAuth: true,
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (!response.ok) {
+        // trata erros de validação retornados pelo back
+        // (username já existe, email já existe, etc.)
+        const data = await response.json().catch(() => ({}));
+
+        // O formato exato do erro pode variar — ajuste conforme o que
+        if (data.username) {
+          setUsernameError(Array.isArray(data.username) ? data.username[0] : data.username);
+        }
+        if (data.email) {
+          setEmailError(Array.isArray(data.email) ? data.email[0] : data.email);
+        }
+        if (!data.username && !data.email) {
+          setServerError("Não foi possível criar a conta. Verifique os dados.");
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // após cadastrar, faz login automaticamente
+      // então por segurança chamamos /api/token/ em seguida)
+      const loginResponse = await apiFetch("/api/token/", {
+        method: "POST",
+        skipAuth: true,
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (loginResponse.ok) {
+        const tokenData = await loginResponse.json();
+        salvarTokens(tokenData);
+      }
+
+      setLoading(false);
+      navigate("/home");
+    } catch (err) {
+      setServerError("Não foi possível conectar ao servidor. Tente novamente.");
+      setLoading(false);
+    }
   };
 
-  // Ícone de olho aberto (senha visível)
   const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -100,7 +124,6 @@ export default function Cadastro() {
     </svg>
   );
 
-  // Ícone de olho fechado (senha oculta)
   const EyeOffIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -117,7 +140,6 @@ export default function Cadastro() {
 
         <form onSubmit={handleSubmit}>
 
-          {/* Campo Nome de Usuário */}
           <div className="cadastro-field">
             <label className="cadastro-label" htmlFor="username">
               Nome de Usuário
@@ -136,7 +158,6 @@ export default function Cadastro() {
             {usernameError && <p className="cadastro-error">{usernameError}</p>}
           </div>
 
-          {/* Campo Email */}
           <div className="cadastro-field">
             <label className="cadastro-label" htmlFor="email">
               Email
@@ -155,7 +176,6 @@ export default function Cadastro() {
             {emailError && <p className="cadastro-error">{emailError}</p>}
           </div>
 
-          {/* Campo Senha */}
           <div className="cadastro-field">
             <label className="cadastro-label" htmlFor="password">
               Senha
@@ -184,7 +204,6 @@ export default function Cadastro() {
             {passwordError && <p className="cadastro-error">{passwordError}</p>}
           </div>
 
-          {/* Campo Confirmar Senha */}
           <div className="cadastro-field">
             <label className="cadastro-label" htmlFor="confirmPassword">
               Confirme sua Senha
@@ -213,17 +232,14 @@ export default function Cadastro() {
             {confirmPasswordError && <p className="cadastro-error">{confirmPasswordError}</p>}
           </div>
 
-          {/* Erro do servidor — ex: email já cadastrado */}
-          {/* TODO: esse erro virá do back quando a API retornar erro 409 */}
           {serverError && <p className="cadastro-server-error">{serverError}</p>}
 
-          <button type="submit" className="cadastro-btn">
-            Criar conta
+          <button type="submit" className="cadastro-btn" disabled={loading}>
+            {loading ? "criando conta..." : "Criar conta"}
           </button>
 
         </form>
 
-        {/* Link de volta pro login */}
         <div className="cadastro-login-link">
           <span>Já tem uma conta? </span>
           <button
