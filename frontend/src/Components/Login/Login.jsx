@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, salvarTokens } from "../../api"; // ajuste o caminho conforme onde você colocar api.js
+import { apiFetch, salvarTokens } from "../../api";
 import "./Login.css";
 
 const Login = () => {
