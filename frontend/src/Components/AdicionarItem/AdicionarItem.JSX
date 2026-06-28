@@ -1,84 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../api"; //ajuste o caminho conforme a pasta real do seu arquivo
 import "./AdicionarItem.css";
-
-// ============================================================
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockCollections e substituir por chamada à API:
-// const [collections, setCollections] = useState([])
-// useEffect(() => {
-//   fetch('url-da-api/collections/', {
-//     headers: { Authorization: `Bearer ${localStorage.getItem('access')}` }
-//   })
-//     .then(res => res.json())
-//     .then(data => setCollections(Array.isArray(data) ? data : data.results))
-// }, [])
-// O back vai retornar: [{ id, name }, ...]
-// ============================================================
-const mockCollections = [
-  { id: 1, name: "McDonalds" },
-  { id: 2, name: "Sanrio" },
-  { id: 3, name: "Disney" },
-];
 
 const MAX_IMAGES = 3;
 
 export default function AdicionarItem() {
   const navigate = useNavigate();
 
-  // Estados dos campos
+  // antes era mockCollections fixo. Agora vem do back via GET /api/collections/
+  const [collections, setCollections] = useState([]);
+  const [loadingCollections, setLoadingCollections] = useState(true);
+  const [loadCollectionsError, setLoadCollectionsError] = useState("");
 
   const [name, setName] = useState("");
   const [collectionId, setCollectionId] = useState("");
   const [description, setDescription] = useState("");
-
   const [images, setImages] = useState([]);
 
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false); // feedback de carregamento ao salvar
 
-  // Estados de erro
   const [nameError, setNameError] = useState("");
   const [collectionError, setCollectionError] = useState("");
   const [imageError, setImageError] = useState("");
+  const [serverError, setServerError] = useState(""); // erro genérico do back
 
-  // Remove uma imagem da lista pelo índice
+  //  bloco inteiro: busca as coleções reais do usuário ao abrir a tela
+  useEffect(() => {
+    const carregarColecoes = async () => {
+      try {
+        const response = await apiFetch("/api/collections/");
+
+        if (!response.ok) {
+          setLoadCollectionsError("Não foi possível carregar suas coleções.");
+          setLoadingCollections(false);
+          return;
+        }
+
+        const data = await response.json();
+        // Algumas APIs Django retornam a lista direto, outras dentro de "results"
+        // (paginação). Tratamos os dois casos por segurança.
+        setCollections(Array.isArray(data) ? data : data.results ?? []);
+        setLoadingCollections(false);
+      } catch (err) {
+        setLoadCollectionsError("Não foi possível conectar ao servidor.");
+        setLoadingCollections(false);
+      }
+    };
+
+    carregarColecoes();
+  }, []);
+
   const handleRemoveImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
     setImageError("");
   };
 
-  // Adiciona novas imagens pelo seletor de arquivos
-  // TODO: quando o back estiver pronto, enviar as imagens para a API
-  // (ex: via FormData no POST de criação do item, ou em um endpoint
-  // separado de upload que retorne as URLs definitivas)
   const handleAddImages = (e) => {
     const files = Array.from(e.target.files);
 
-    // 🆕 NOVO — valida o limite de 3 imagens antes de adicionar
     if (images.length + files.length > MAX_IMAGES) {
       setImageError(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
-      e.target.value = ""; // reseta o input pra poder selecionar de novo
+      e.target.value = "";
       return;
     }
 
     setImageError("");
 
-    // 🆕 ALTERADO — antes: files.map((file) => URL.createObjectURL(file))
-    // AGORA: guarda o file E a preview juntos
     const newImages = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
 
     setImages([...images, ...newImages]);
-    e.target.value = ""; // permite selecionar o mesmo arquivo de novo se remover e readicionar
+    e.target.value = "";
   };
 
   const canSave = name.trim() !== "" && collectionId !== "";
 
-  const handleSave = () => {
+  // bloco inteiro: agora chama POST /api/items/ de verdade
+  const handleSave = async () => {
     setNameError("");
     setCollectionError("");
+    setServerError("");
 
     let hasError = false;
 
@@ -92,48 +97,61 @@ export default function AdicionarItem() {
     }
     if (hasError) return;
 
-    // pronta pra usar quando o endpoint estiver no ar
+    setSaving(true);
+
     const formData = new FormData();
-    formData.append('name', name.trim());
-    formData.append('description', description.trim());
-    formData.append('collection', Number(collectionId));
-    images.forEach((img) => formData.append('images', img.file)); // 🆕 envia o File real
+    formData.append("name", name.trim());
+    formData.append("description", description.trim());
+    formData.append("collection", Number(collectionId));
+    //antes era "images", a doc confirma que o campo certo é "uploaded_images"
+    images.forEach((img) => formData.append("uploaded_images", img.file));
 
-    // TODO: descomentar quando o back estiver pronto:
-    // fetch('url-da-api/items/', {
-    //   method: 'POST',
-    //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
-    //   body: formData, // não definir Content-Type manualmente — o navegador faz isso
-    // })
-    //   .then(res => res.json())
-    //   .then(newItem => {
-    //     setSaved(true);
-    //     setTimeout(() => navigate(-1, { state: { newItem } }), 600);
-    //   })
+    try {
+      const response = await apiFetch("/api/items/", {
+        method: "POST",
+        body: formData,
+      });
 
-    const collectionName = mockCollections.find(c => String(c.id) === String(collectionId))?.name ?? "";
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.name) {
+          setNameError(Array.isArray(data.name) ? data.name[0] : data.name);
+        }
+        if (data.collection) {
+          setCollectionError(Array.isArray(data.collection) ? data.collection[0] : data.collection);
+        }
+        if (!data.name && !data.collection) {
+          setServerError("Não foi possível criar o item.");
+        }
+        setSaving(false);
+        return;
+      }
 
-    // Monta o objeto do novo item no mesmo formato que o UserProfilePage espera
-    const newItem = {
-      id: Date.now(),
-      name: name.trim(),
-      collection: collectionName,
-      description: description.trim(),
-      images: images.length > 0
-        ? images.map((img) => img.preview)
-        : ["https://placehold.co/120x120/fce4ec/c2185b?text=Novo"],
-    };
+      const newItem = await response.json();
 
-    setSaved(true);
-    // Exibe "salvo!" brevemente e volta para o perfil
-    // O UserProfilePage lê o newItem via useLocation e adiciona na lista
-    setTimeout(() => navigate(-1, { state: { newItem } }), 600);
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => navigate(-1, { state: { newItem } }), 600);
+    } catch (err) {
+      setServerError("Não foi possível conectar ao servidor.");
+      setSaving(false);
+    }
   };
+
+  // exibe carregamento enquanto busca as coleções
+  if (loadingCollections) {
+    return (
+      <div className="add-item-page">
+        <main className="add-item-main">
+          <p>Carregando...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="add-item-page">
 
-      {/* Cabeçalho — mesmo padrão de EditarItem / EditarColecao */}
       <header className="add-item-header">
         <button
           className="add-item-back-btn"
@@ -153,19 +171,16 @@ export default function AdicionarItem() {
 
         <div className="add-item-card">
 
-          {/* Grid de imagens — mesmo padrão de EditarItem */}
           <div className="add-item-images-section">
             <div className="add-item-images-grid">
               {images.map((img, i) => (
                 <div key={i} className="add-item-image-wrap">
                   <img src={img.preview} alt={`Imagem ${i + 1}`} />
-                  {/* Botão de remover imagem */}
                   <button
                     className="add-item-remove-img-btn"
                     onClick={() => handleRemoveImage(i)}
                     aria-label="Remover imagem"
                   >
-                    {/* Ícone de lixeira */}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -176,7 +191,6 @@ export default function AdicionarItem() {
                 </div>
               ))}
 
-              {/* Botão de adicionar imagem */}
               {images.length < MAX_IMAGES && (
                 <label className="add-item-add-img-btn" aria-label="Adicionar imagem">
                   <input
@@ -194,14 +208,11 @@ export default function AdicionarItem() {
                 </label>
               )}
             </div>
-            {/*mensagem de erro de limite de imagens */}
             {imageError && <p className="add-item-error">{imageError}</p>}
           </div>
 
-          {/* Campos do item */}
           <div className="add-item-fields">
 
-            {/* Campo Nome — obrigatório */}
             <div className="add-item-field">
               <label className="add-item-label">Nome</label>
               <input
@@ -214,8 +225,6 @@ export default function AdicionarItem() {
               {nameError && <p className="add-item-error">{nameError}</p>}
             </div>
 
-            {/* Campo Coleção — dropdown, obrigatório */}
-            {/* TODO: trocar mockCollections pelas coleções vindas da API */}
             <div className="add-item-field">
               <label className="add-item-label">Coleção</label>
               <div className="add-item-select-wrap">
@@ -225,15 +234,22 @@ export default function AdicionarItem() {
                   onChange={(e) => { setCollectionId(e.target.value); setCollectionError(""); }}
                 >
                   <option value="">Selecione uma coleção</option>
-                  {mockCollections.map((col) => (
+                  {/*antes era mockCollections, agora é collections (do back) */}
+                  {collections.map((col) => (
                     <option key={col.id} value={col.id}>{col.name}</option>
                   ))}
                 </select>
               </div>
               {collectionError && <p className="add-item-error">{collectionError}</p>}
+              {/*avisa se não há coleções pra escolher */}
+              {!loadCollectionsError && collections.length === 0 && (
+                <p className="add-item-error">
+                  Você ainda não tem nenhuma coleção. Crie uma coleção primeiro.
+                </p>
+              )}
+              {loadCollectionsError && <p className="add-item-error">{loadCollectionsError}</p>}
             </div>
 
-            {/* Campo Descrição — opcional */}
             <div className="add-item-field">
               <label className="add-item-label">Descrição</label>
               <textarea
@@ -244,14 +260,15 @@ export default function AdicionarItem() {
               />
             </div>
 
-            {/* Botão Salvar — desabilitado até nome + coleção preenchidos */}
+            {serverError && <p className="add-item-error">{serverError}</p>}
+
             <div className="add-item-save-row">
               <button
                 className="add-item-save-btn"
                 onClick={handleSave}
-                disabled={!canSave}
+                disabled={!canSave || saving}
               >
-                {saved ? "salvo!" : "salvar"}
+                {saved ? "salvo!" : saving ? "salvando..." : "salvar"}
               </button>
             </div>
 
