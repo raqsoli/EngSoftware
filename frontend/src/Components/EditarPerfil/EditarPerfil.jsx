@@ -16,6 +16,12 @@ export default function EditProfilePage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // estado do avatar: guarda o File real (pra enviar) e a preview (pra exibir)
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(mockUser.avatar);
+  const [avatarSaved, setAvatarSaved] = useState(false); //feedback de "salvo!"
+  const [avatarError, setAvatarError] = useState(""); // erro de tipo/tamanho
+
   const [nameSaved, setNameSaved] = useState(false);
   const [emailSaved, setEmailSaved] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
@@ -28,6 +34,51 @@ export default function EditProfilePage() {
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // bloco inteiro da função.
+  // ANTES: manipulava o DOM direto com document.querySelector(".edit-profile-avatar").src = url
+  // AGORA: usa estado React (avatarFile + avatarPreview), sem tocar no DOM manualmente
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setAvatarError("");
+
+    //validação básica de tipo (o accept="image/*" do input é só sugestão visual,
+    // então confirmamos aqui também)
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Selecione um arquivo de imagem válido.");
+      return;
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  //salva o avatar (monta o FormData com o File real)
+  const handleSaveAvatar = () => {
+    if (!avatarFile) return; // nada novo pra salvar
+
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+
+    // TODO: descomentar quando o back estiver pronto:
+    // fetch('url-da-api/usuario/avatar', {
+    //   method: 'PUT',
+    //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
+    //   body: formData, // não definir Content-Type manualmente
+    // })
+    //   .then(res => {
+    //     if (res.ok) {
+    //       setAvatarSaved(true);
+    //       setTimeout(() => setAvatarSaved(false), 2000);
+    //     }
+    //   })
+
+    // Por enquanto, só simula o feedback de sucesso
+    setAvatarSaved(true);
+    setTimeout(() => setAvatarSaved(false), 2000);
   };
 
   const handleSaveName = () => {
@@ -96,7 +147,7 @@ export default function EditProfilePage() {
         <div className="edit-profile-avatar-section">
           <img
             className="edit-profile-avatar"
-            src={mockUser.avatar}
+            src={avatarPreview}
             alt="Foto de perfil"
           />
           <input
@@ -104,13 +155,7 @@ export default function EditProfilePage() {
             id="avatar-input"
             accept="image/*"
             style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const url = URL.createObjectURL(file);
-                document.querySelector(".edit-profile-avatar").src = url;
-              }
-            }}
+            onChange={handleAvatarChange} // 🆕 ALTERADO — antes tinha a função inline com document.querySelector
           />
           <button
             className="edit-profile-avatar-btn"
@@ -118,6 +163,18 @@ export default function EditProfilePage() {
           >
             Editar foto
           </button>
+          {/*erro de tipo de arquivo */}
+          {avatarError && <p className="edit-profile-error">{avatarError}</p>}
+          {/*botão salvar só aparece se o usuário trocou a foto */}
+          {avatarFile && (
+            <button
+              className="edit-profile-save-btn"
+              onClick={handleSaveAvatar}
+              style={{ marginTop: "8px" }}
+            >
+              {avatarSaved ? "salvo!" : "salvar foto"}
+            </button>
+          )}
         </div>
 
         <div className="edit-profile-field">
