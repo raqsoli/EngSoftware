@@ -8,9 +8,9 @@ const mockItem = {
   collectionId: 1,
   description: "",
   images: [
-    "https://placehold.co/120x120/fce4ec/c2185b?text=HK+1",
-    "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+2",
-    "https://placehold.co/120x120/f48fb1/880e4f?text=HK+3",
+    { preview: "https://placehold.co/120x120/fce4ec/c2185b?text=HK+1", isExisting: true },
+    { preview: "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+2", isExisting: true },
+    { preview: "https://placehold.co/120x120/f48fb1/880e4f?text=HK+3", isExisting: true },
   ],
 };
 
@@ -23,6 +23,8 @@ const mockCollections = [
 // TODO: substituir por verificação real com o token do usuário logado
 // O back valida se o item pertence ao usuário — aqui simulamos que é dono
 const mockIsOwner = true;
+
+const MAX_IMAGES = 3;
 
 export default function EditItemPage() {
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ export default function EditItemPage() {
   const [descriptionSaved, setDescriptionSaved] = useState(false);
 
   const [nameError, setNameError] = useState("");
+  const [imageError, setImageError] = useState(""); 
 
   // Estados do modal de exclusão
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -50,8 +53,25 @@ export default function EditItemPage() {
 
   const handleAddImages = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file) => URL.createObjectURL(file));
+
+    // 🆕 NOVO — valida o limite de 3 imagens antes de adicionar
+    if (images.length + files.length > MAX_IMAGES) {
+      setImageError(`Você pode ter no máximo ${MAX_IMAGES} imagens.`);
+      e.target.value = "";
+      return;
+    }
+
+    setImageError("");
+
+    // 🆕 ALTERADO — guarda o File real (isExisting: false = imagem nova, ainda não salva)
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isExisting: false,
+    }));
+
     setImages([...images, ...newImages]);
+    e.target.value = "";
   };
 
   const handleSaveName = () => {
@@ -77,21 +97,27 @@ export default function EditItemPage() {
     setTimeout(() => setDescriptionSaved(false), 2000);
   };
 
+  // salva as imagens (separando o que é novo do que já existia)
+  const handleSaveImages = () => {
+    // monta o FormData só com as imagens NOVAS (File real)
+    const formData = new FormData();
+    images
+      .filter((img) => !img.isExisting)
+      .forEach((img) => formData.append('images', img.file));
+
+    // TODO: descomentar quando o back estiver pronto:
+    // fetch('url-da-api/item/' + id + '/imagens', {
+    //   method: 'POST', // ou PUT, dependendo do contrato definido com o back
+    //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
+    //   body: formData,
+    // })
+  };
+
   const handleConfirmDelete = () => {
     setDeleteLoading(true);
 
-    // TODO: quando o back estiver pronto, substituir por chamada à API:
-    // fetch('url-da-api/item/' + id, { method: 'DELETE' })
-    //   .then(res => {
-    //     if (res.ok) {
-    //       setDeleteLoading(false);
-    //       setShowDeleteModal(false);
-    //       setDeleteSuccess(true);
-    //       setTimeout(() => navigate(-1), 2000);
-    //     }
-    //   })
+    // TODO: fetch('url-da-api/item/' + id, { method: 'DELETE' })
 
-    // Por enquanto, simula o retorno de sucesso do back
     setTimeout(() => {
       setDeleteLoading(false);
       setShowDeleteModal(false);
@@ -126,7 +152,7 @@ export default function EditItemPage() {
             <div className="edit-item-images-grid">
               {images.map((img, i) => (
                 <div key={i} className="edit-item-image-wrap">
-                  <img src={img} alt={`Imagem ${i + 1}`} />
+                  <img src={img.preview} alt={`Imagem ${i + 1}`} />
                   <button
                     className="edit-item-remove-img-btn"
                     onClick={() => handleRemoveImage(i)}
@@ -142,20 +168,29 @@ export default function EditItemPage() {
                 </div>
               ))}
 
-              <label className="edit-item-add-img-btn" aria-label="Adicionar imagem">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={handleAddImages}
-                />
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="16"/>
-                  <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-              </label>
+              {images.length < MAX_IMAGES && (
+                <label className="edit-item-add-img-btn" aria-label="Adicionar imagem">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: "none" }}
+                    onChange={handleAddImages}
+                  />
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                </label>
+              )}
+            </div>
+            {/* 🆕 NOVO — erro de limite + botão salvar imagens */}
+            {imageError && <p className="edit-item-error">{imageError}</p>}
+            <div className="edit-item-save-row">
+              <button className="edit-item-save-btn" onClick={handleSaveImages}>
+                salvar imagens
+              </button>
             </div>
           </div>
 
