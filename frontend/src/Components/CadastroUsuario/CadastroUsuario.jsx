@@ -71,6 +71,7 @@ export default function Cadastro() {
     try {
       const response = await apiFetch("/api/register/", {
         method: "POST",
+        skipAuth: true,
         body: JSON.stringify({ username, email, password }),
       });
 
@@ -98,6 +99,7 @@ export default function Cadastro() {
       // então por segurança chamamos /api/token/ em seguida)
       const loginResponse = await apiFetch("/api/token/", {
         method: "POST",
+        skipAuth: true,
         body: JSON.stringify({ username, password }),
       });
 
