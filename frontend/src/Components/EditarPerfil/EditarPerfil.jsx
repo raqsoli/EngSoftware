@@ -1,52 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../api";
 import "./EditarPerfil.css";
-
-const mockUser = {
-  name: "AmoHelloKitty123",
-  email: "AmoHelloKitty123@gmail.com",
-  avatar: "https://placehold.co/80x80/fce4ec/c2185b?text=A",
-};
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState(mockUser.name);
-  const [email, setEmail] = useState(mockUser.email);
+  // antes vinha de mockUser fixo. Agora começa vazio
+  // e é preenchido pelo GET /api/profile/ no useEffect abaixo
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  // controla o carregamento inicial da tela (enquanto busca o perfil)
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  // estado do avatar: guarda o File real (pra enviar) e a preview (pra exibir)
+  // avatarPreview começa null até o GET carregar a imagem real
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(mockUser.avatar);
-  const [avatarSaved, setAvatarSaved] = useState(false); //feedback de "salvo!"
-  const [avatarError, setAvatarError] = useState(""); // erro de tipo/tamanho
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarError, setAvatarError] = useState("");
 
-  const [nameSaved, setNameSaved] = useState(false);
-  const [emailSaved, setEmailSaved] = useState(false);
+  // antes eram 3 estados de "saved" separados (nameSaved, emailSaved, ...)
+  // Agora é um único profileSaved, já que nome+email+avatar salvam juntos
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
+  // erros de nome/email agora vêm do back, não só de validação local
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [profileServerError, setProfileServerError] = useState("");
+
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [newPasswordError, setNewPasswordError] = useState("");
+  const [passwordServerError, setPasswordServerError] = useState("");
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // bloco inteiro da função.
-  // ANTES: manipulava o DOM direto com document.querySelector(".edit-profile-avatar").src = url
-  // AGORA: usa estado React (avatarFile + avatarPreview), sem tocar no DOM manualmente
+  // bloco inteiro: busca os dados reais do perfil ao abrir a tela
+  useEffect(() => {
+    const carregarPerfil = async () => {
+      try {
+        const response = await apiFetch("/api/profile/");
+
+        if (!response.ok) {
+          setLoadError("Não foi possível carregar seu perfil.");
+          setLoadingProfile(false);
+          return;
+        }
+
+        const data = await response.json();
+        setName(data.username ?? "");
+        setEmail(data.email ?? "");
+        // A doc diz que imagens retornadas já vêm como URL utilizável direto
+        setAvatarPreview(data.image ?? null);
+        setLoadingProfile(false);
+      } catch (err) {
+        setLoadError("Não foi possível conectar ao servidor.");
+        setLoadingProfile(false);
+      }
+    };
+
+    carregarPerfil();
+  }, []);
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setAvatarError("");
 
-    //validação básica de tipo (o accept="image/*" do input é só sugestão visual,
-    // então confirmamos aqui também)
     if (!file.type.startsWith("image/")) {
       setAvatarError("Selecione um arquivo de imagem válido.");
       return;
@@ -56,56 +86,77 @@ export default function EditProfilePage() {
     setAvatarPreview(URL.createObjectURL(file));
   };
 
-  //salva o avatar (monta o FormData com o File real)
-  const handleSaveAvatar = () => {
-    if (!avatarFile) return; // nada novo pra salvar
-
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
-
-    // TODO: descomentar quando o back estiver pronto:
-    // fetch('url-da-api/usuario/avatar', {
-    //   method: 'PUT',
-    //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
-    //   body: formData, // não definir Content-Type manualmente
-    // })
-    //   .then(res => {
-    //     if (res.ok) {
-    //       setAvatarSaved(true);
-    //       setTimeout(() => setAvatarSaved(false), 2000);
-    //     }
-    //   })
-
-    // Por enquanto, só simula o feedback de sucesso
-    setAvatarSaved(true);
-    setTimeout(() => setAvatarSaved(false), 2000);
-  };
-
-  const handleSaveName = () => {
+  //bloco inteiro: antes eram handleSaveName + handleSaveEmail separados.
+  // Agora é um único handleSaveProfile que envia nome+email+avatar juntos
+  // via PUT /api/profile, usando FormData (porque pode incluir uma imagem)
+  const handleSaveProfile = async () => {
     setNameError("");
+    setEmailError("");
+    setProfileServerError("");
+
+    let hasError = false;
+
     if (name.trim() === "") {
       setNameError("O nome não pode ser vazio.");
-      return;
+      hasError = true;
     }
-    // TODO: fetch('url-da-api/usuario/nome', { method: 'PUT', body: JSON.stringify({ name }) })
-    setNameSaved(true);
-    setTimeout(() => setNameSaved(false), 2000);
-  };
-
-  const handleSaveEmail = () => {
-    setEmailError("");
     if (!validateEmail(email)) {
       setEmailError("Digite um email válido.");
-      return;
+      hasError = true;
     }
-    // TODO: fetch('url-da-api/usuario/email', { method: 'PUT', body: JSON.stringify({ email }) })
-    setEmailSaved(true);
-    setTimeout(() => setEmailSaved(false), 2000);
+    if (hasError) return;
+
+    setProfileSaving(true);
+
+    const formData = new FormData();
+    formData.append("username", name.trim());
+    formData.append("email", email.trim());
+    // Só envia a imagem se o usuário trocou — assim não sobrescreve
+    // a imagem existente com um campo vazio
+    if (avatarFile) {
+      formData.append("image", avatarFile);
+    }
+
+    try {
+      const response = await apiFetch("/api/profile/", {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        // repassa erros de campo retornados pelo back (ex: email já em uso)
+        if (data.username) {
+          setNameError(Array.isArray(data.username) ? data.username[0] : data.username);
+        }
+        if (data.email) {
+          setEmailError(Array.isArray(data.email) ? data.email[0] : data.email);
+        }
+        if (!data.username && !data.email) {
+          setProfileServerError("Não foi possível salvar o perfil.");
+        }
+        setProfileSaving(false);
+        return;
+      }
+
+      // Limpa o avatarFile depois de salvar — a próxima vez que abrir a tela,
+      // o avatarPreview já reflete a imagem salva de verdade no back
+      setAvatarFile(null);
+      setProfileSaving(false);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch (err) {
+      setProfileServerError("Não foi possível conectar ao servidor.");
+      setProfileSaving(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  // 🆕 bloco inteiro: agora chama PUT /api/change-password/ de verdade
+  const handleChangePassword = async () => {
     setCurrentPasswordError("");
     setNewPasswordError("");
+    setPasswordServerError("");
+
     let hasError = false;
     if (currentPassword.length < 6) {
       setCurrentPasswordError("A senha deve ter pelo menos 6 caracteres.");
@@ -119,12 +170,67 @@ export default function EditProfilePage() {
       hasError = true;
     }
     if (hasError) return;
-    // TODO: fetch('url-da-api/usuario/senha', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })
-    setPasswordSaved(true);
-    setCurrentPassword("");
-    setNewPassword("");
-    setTimeout(() => setPasswordSaved(false), 2000);
+
+    setPasswordSaving(true);
+
+    try {
+      const response = await apiFetch("/api/change-password/", {
+        method: "PUT",
+        body: JSON.stringify({
+          old_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        // 🆕 NOVO — trata "senha atual incorreta" vindo do back
+        if (data.old_password) {
+          setCurrentPasswordError(
+            Array.isArray(data.old_password) ? data.old_password[0] : data.old_password
+          );
+        } else if (data.new_password) {
+          setNewPasswordError(
+            Array.isArray(data.new_password) ? data.new_password[0] : data.new_password
+          );
+        } else {
+          setPasswordServerError("Não foi possível alterar a senha.");
+        }
+        setPasswordSaving(false);
+        return;
+      }
+
+      setPasswordSaving(false);
+      setPasswordSaved(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setTimeout(() => setPasswordSaved(false), 2000);
+    } catch (err) {
+      setPasswordServerError("Não foi possível conectar ao servidor.");
+      setPasswordSaving(false);
+    }
   };
+
+  // exibe um estado de carregamento simples enquanto busca o perfil
+  if (loadingProfile) {
+    return (
+      <div className="edit-profile-page">
+        <main className="edit-profile-main">
+          <p>Carregando perfil...</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="edit-profile-page">
+        <main className="edit-profile-main">
+          <p className="edit-profile-error">{loadError}</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="edit-profile-page">
@@ -147,7 +253,7 @@ export default function EditProfilePage() {
         <div className="edit-profile-avatar-section">
           <img
             className="edit-profile-avatar"
-            src={avatarPreview}
+            src={avatarPreview || "https://placehold.co/80x80/fce4ec/c2185b?text=?"}
             alt="Foto de perfil"
           />
           <input
@@ -155,7 +261,7 @@ export default function EditProfilePage() {
             id="avatar-input"
             accept="image/*"
             style={{ display: "none" }}
-            onChange={handleAvatarChange} // 🆕 ALTERADO — antes tinha a função inline com document.querySelector
+            onChange={handleAvatarChange}
           />
           <button
             className="edit-profile-avatar-btn"
@@ -163,20 +269,10 @@ export default function EditProfilePage() {
           >
             Editar foto
           </button>
-          {/*erro de tipo de arquivo */}
           {avatarError && <p className="edit-profile-error">{avatarError}</p>}
-          {/*botão salvar só aparece se o usuário trocou a foto */}
-          {avatarFile && (
-            <button
-              className="edit-profile-save-btn"
-              onClick={handleSaveAvatar}
-              style={{ marginTop: "8px" }}
-            >
-              {avatarSaved ? "salvo!" : "salvar foto"}
-            </button>
-          )}
         </div>
 
+        {/* Nome e Email não têm mais botão "salvar" individual */}
         <div className="edit-profile-field">
           <label className="edit-profile-label">Nome</label>
           <input
@@ -189,9 +285,6 @@ export default function EditProfilePage() {
             }}
           />
           {nameError && <p className="edit-profile-error">{nameError}</p>}
-          <button className="edit-profile-save-btn" onClick={handleSaveName}>
-            {nameSaved ? "salvo!" : "salvar"}
-          </button>
         </div>
 
         <div className="edit-profile-field">
@@ -206,10 +299,17 @@ export default function EditProfilePage() {
             }}
           />
           {emailError && <p className="edit-profile-error">{emailError}</p>}
-          <button className="edit-profile-save-btn" onClick={handleSaveEmail}>
-            {emailSaved ? "salvo!" : "salvar"}
-          </button>
         </div>
+
+        {/* botão único que salva nome + email + avatar juntos */}
+        {profileServerError && <p className="edit-profile-error">{profileServerError}</p>}
+        <button
+          className="edit-profile-save-btn"
+          onClick={handleSaveProfile}
+          disabled={profileSaving}
+        >
+          {profileSaved ? "salvo!" : profileSaving ? "salvando..." : "Salvar perfil"}
+        </button>
 
         <div className="edit-profile-password-section">
           <h2 className="edit-profile-password-title">Mudar Senha</h2>
@@ -242,14 +342,19 @@ export default function EditProfilePage() {
             {newPasswordError && <p className="edit-profile-error">{newPasswordError}</p>}
           </div>
 
+          {passwordServerError && <p className="edit-profile-error">{passwordServerError}</p>}
+
           <div className="edit-profile-password-footer">
-            <button className="edit-profile-change-btn" onClick={handleChangePassword}>
-              {passwordSaved ? "alterado!" : "mudar"}
+            <button
+              className="edit-profile-change-btn"
+              onClick={handleChangePassword}
+              disabled={passwordSaving}
+            >
+              {passwordSaved ? "alterado!" : passwordSaving ? "alterando..." : "mudar"}
             </button>
           </div>
         </div>
 
-        {/* Botão excluir conta — redireciona para tela de confirmação */}
         <div className="edit-profile-delete-row">
           <button
             className="edit-profile-delete-btn"
