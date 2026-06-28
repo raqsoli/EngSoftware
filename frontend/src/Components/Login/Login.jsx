@@ -55,6 +55,7 @@ const Login = () => {
     try {
       const response = await apiFetch("/api/token/", {
         method: "POST",
+        skipAuth: true, // nunca enviar token (mesmo expirado) numa rota pública de login
         body: JSON.stringify({ username, password }),
       });
 
