@@ -12,6 +12,8 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     hearts_count = serializers.SerializerMethodField()
 
+    images = serializers.SerializerMethodField()
+
     class Meta:
         model = Collection
         fields = "__all__"
@@ -20,3 +22,29 @@ class CollectionSerializer(serializers.ModelSerializer):
         return FavoriteCollection.objects.filter(
             collection=obj
         ).count()
+
+    def get_images(self, obj):
+
+        request = self.context.get("request")
+
+        images = []
+
+        for item in obj.items.all():
+
+            for image in item.images.all():
+
+                if request:
+                    images.append(
+                        request.build_absolute_uri(
+                            image.image.url
+                        )
+                    )
+                else:
+                    images.append(
+                        image.image.url
+                    )
+                # retorna no máximo 4 imagens
+                if len(images) == 4:
+                    return images
+
+        return images
