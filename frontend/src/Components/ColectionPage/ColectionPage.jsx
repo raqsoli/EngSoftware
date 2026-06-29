@@ -1,49 +1,150 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiFetch } from "../../api";
 import "./ColectionPage.css";
 
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockCollection e substituir por chamada à API:
-// const [collection, setCollection] = useState(null)
-// useEffect(() => {
-//   fetch('url-da-api/colecao/' + id)
-//     .then(res => res.json())
-//     .then(data => setCollection(data))
-// }, [id])
-// O back vai retornar: id, name, description, items, owner, favorited
 
-const mockCollection = {
-  id: 1,
-  name: "Hello Kit - McDonalds 2025",
-  description: "Aqui vai aparecer a descrição da coleção",
-  // TODO: owner virá do back com os dados do dono da coleção
-  owner: {
-    id: 1,
-    name: "HelloKitty123",
-    avatar: "https://placehold.co/40x40/fce4ec/c2185b?text=A",
-  },
-  // TODO: items é uma lista de itens da coleção vindos do back
-  items: [
-    { id: 1, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/fce4ec/c2185b?text=Item+1" },
-    { id: 2, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/f8bbd0/ad1457?text=Item+2" },
-    { id: 3, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/f48fb1/880e4f?text=Item+3" },
-    { id: 4, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/fce4ec/c2185b?text=Item+4" },
-    { id: 5, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/f8bbd0/ad1457?text=Item+5" },
-    { id: 6, name: "Hello Kitty - McDonalds 2025", image: "https://placehold.co/300x300/f48fb1/880e4f?text=Item+6" },
-  ],
-};
 
 export default function CollectionPage() {
-  // useParams pega o id da URL — ex: /colecao/1 → id = "1"
-  // TODO: usar o id para buscar a coleção correta na API
   const { id } = useParams();
-
   const navigate = useNavigate();
-
-  // Favorito — só visual por enquanto
-  // TODO: quando o back estiver pronto, o valor inicial virá da API
-  // TODO: ao clicar, salvar no banco: fetch('url-da-api/favoritar/colecao/' + id, { method: 'POST' })
+  const [collection, setCollection] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [favorited, setFavorited] = useState(false);
+  const [favoriteRecordId, setFavoriteRecordId] = useState(null);
+
+  useEffect(() => {
+    const carregarColecao = async () => {
+      try {
+        const [
+          collectionRes,
+          itemsRes,
+          favoriteRes
+
+        ] = await Promise.all([
+          apiFetch(`/api/collections/${id}/`),
+          apiFetch(`/api/items/?collection=${id}`),
+          apiFetch("/api/favorite-collections/")
+        ]);
+
+        if (!collectionRes.ok) {
+          setError("Coleção não encontrada.");
+          return;
+
+        }
+        const collectionData = await collectionRes.json();
+
+        setCollection(collectionData);
+
+        if (itemsRes.ok) {
+          const data = await itemsRes.json();
+          setItems(
+            Array.isArray(data)
+              ? data
+              : data.results ?? []
+          );
+        }
+
+        if (favoriteRes.ok) {
+          const favorites = await favoriteRes.json();
+          const list = Array.isArray(favorites)
+            ? favorites
+            : favorites.results ?? [];
+          const fav = list.find(
+            f => f.collection === collectionData.id
+          );
+
+          if (fav) {
+            setFavorited(true);
+            setFavoriteRecordId(fav.id);
+          }
+        }
+      }
+
+      catch {
+        setError("Erro ao carregar coleção.");
+      }
+
+      finally {
+        setLoading(false);
+      }
+    };
+    carregarColecao();
+  }, [id]);
+
+  const handleToggleFavorite = async () => {
+    if (!collection) return;
+    if (favorited) {
+      setFavorited(false);
+      try {
+        await apiFetch(
+          `/api/favorite-collections/${favoriteRecordId}/`,
+          {
+            method: "DELETE"
+          }
+        );
+        setFavoriteRecordId(null);
+      }
+      catch {
+        setFavorited(true);
+      }
+    }
+
+    else {
+      setFavorited(true);
+      try {
+        const res = await apiFetch(
+          "/api/favorite-collections/",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              collection: collection.id
+            })
+          }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteRecordId(data.id);
+        }
+        else {
+          setFavorited(false);
+        }
+      }
+      catch {
+        setFavorited(false);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="collection-page">
+        <p style={{
+          textAlign: "center",
+          padding: 40
+        }}>
+          Carregando...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !collection) {
+    return (
+      <div className="collection-page">
+        <p style={{
+          textAlign: "center",
+          color: "#e91e8c",
+          padding: 40
+        }}>
+          {error}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="collection-page">
@@ -67,13 +168,11 @@ export default function CollectionPage() {
         {/* Nome da coleção, favorito e dono */}
         <div className="collection-top-info">
           <div className="collection-title-row">
-            <h2 className="collection-name">{mockCollection.name}</h2>
+            <h2 className="collection-name">{collection.name}</h2>
 
-            {/* Botão de favoritar a coleção */}
-            {/* TODO: quando o back estiver pronto, salvar no banco ao clicar */}
             <button
               className="collection-heart-btn"
-              onClick={() => setFavorited(!favorited)}
+              onClick={handleToggleFavorite}
               aria-label={favorited ? "Desfavoritar" : "Favoritar"}
             >
               {favorited ? (
@@ -88,27 +187,34 @@ export default function CollectionPage() {
             </button>
           </div>
 
-          {/* Dono da coleção */}
-          {/* TODO: quando a página de perfil de outro usuário estiver pronta,
-               trocar o comentário abaixo e habilitar o navigate:
-               onClick={() => navigate(`/perfil/${mockCollection.owner.id}`)} */}
           <div 
             className="collection-owner"
-            onClick={() => navigate(`/perfil-usuario/${mockCollection.owner.id}`)}
-            style={{ cursor: "pointer" }}
+            style={{ cursor: "default" }}
           >
-            <span className="collection-owner-name">{mockCollection.owner.name}</span>
-            <img
+            <span className="collection-owner-name">{collection.owner}</span>
+
+            <div
               className="collection-owner-avatar"
-              src={mockCollection.owner.avatar}
-              alt={mockCollection.owner.name}
-            />
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "#fce4ec",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#c2185b",
+                fontWeight: 600,
+              }}
+            >
+              {collection.owner?.[0]?.toUpperCase() ?? "?"}
+            </div>
           </div>
         </div>
 
         {/* Grid de itens da coleção */}
         <div className="collection-grid">
-          {mockCollection.items.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="collection-item-card"
@@ -116,11 +222,32 @@ export default function CollectionPage() {
               onClick={() => navigate(`/item/${item.id}`)}
             >
               <div className="collection-item-image-wrapper">
-                <img
-                  className="collection-item-image"
-                  src={item.image}
-                  alt={item.name}
-                />
+                {item.images?.length > 0 ? (
+
+                  <img
+                    className="collection-item-image"
+                    src={item.images?.[0]?.image}
+                    alt={item.name}
+                  />
+
+                ) : (
+
+                  <div
+                    className="collection-item-image"
+                    style={{
+                      background: "#fce4ec",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#c2185b"
+                    }}
+                  >
+
+                    Sem imagem
+
+                  </div>
+
+                )}
               </div>
               <p className="collection-item-name">{item.name}</p>
             </div>
@@ -130,9 +257,8 @@ export default function CollectionPage() {
         {/* Descrição da coleção */}
         <div className="collection-description">
           <p className="collection-description-label">Descrição</p>
-          {/* TODO: mockCollection.description virá do back */}
           <div className="collection-description-box">
-            {mockCollection.description || ""}
+            {collection.description || ""}
           </div>
         </div>
 
