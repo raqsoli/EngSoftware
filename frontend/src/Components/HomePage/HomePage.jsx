@@ -185,7 +185,7 @@ export default function HomePage() {
         if (favItemsRes.ok) {
           const data = await favItemsRes.json();
           const list = Array.isArray(data) ? data : data.results ?? [];
-          const map = new Map(list.map((f) => [f.item, f.id]));
+          const map = new Map(list.map((f) => [f.item?.id, f.id]));
           setFavoriteItems(map);
         }
 
@@ -194,7 +194,7 @@ export default function HomePage() {
         if (favColsRes.ok) {
           const data = await favColsRes.json();
           const list = Array.isArray(data) ? data : data.results ?? [];
-          const map = new Map(list.map((f) => [f.collection, f.id]));
+          const map = new Map(list.map((f) => [f.collection?.id, f.id]));
           setFavoriteCollections(map);
         }
 
@@ -218,7 +218,7 @@ export default function HomePage() {
   const handleToggleFavorite = async (type, id, currentlyFavorited) => {
     const endpoint =
       type === "item" ? "/api/favorite-items/" : "/api/favorite-collections/";
-    const bodyKey = type === "item" ? "item" : "collection";
+    const bodyKey = type === "item" ? "item_id" : "collection_id";
     const setMap = type === "item" ? setFavoriteItems : setFavoriteCollections;
     const currentMap = type === "item" ? favoriteItems : favoriteCollections;
 
