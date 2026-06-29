@@ -37,7 +37,7 @@ export default function ItemPage() {
         if (favItemsRes.ok) {
           const favData = await favItemsRes.json();
           const list = Array.isArray(favData) ? favData : favData.results ?? [];
-          const favRecord = list.find((f) => f.item === itemData.id);
+          const favRecord = list.find((f) => f.item?.id === itemData.id);
           if (favRecord) {
             setFavorited(true);
             setFavoriteRecordId(favRecord.id);
@@ -70,7 +70,9 @@ export default function ItemPage() {
       try {
         const res = await apiFetch("/api/favorite-items/", {
           method: "POST",
-          body: JSON.stringify({ item: item.id }),
+          body: JSON.stringify({
+            item_id: item.id,
+          }),
         });
         if (res.ok) {
           const data = await res.json();
