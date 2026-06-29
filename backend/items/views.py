@@ -22,12 +22,17 @@ class ItemViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
+
         queryset = Item.objects.all()
 
         owner = self.request.query_params.get("owner")
+        collection = self.request.query_params.get("collection")
 
         if owner:
             queryset = queryset.filter(owner_id=owner)
+
+        if collection:
+            queryset = queryset.filter(collection_id=collection)
 
         return queryset
 

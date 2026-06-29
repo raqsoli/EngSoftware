@@ -22,6 +22,10 @@ class ItemSerializer(serializers.ModelSerializer):
         source="owner.username"
     )
 
+    collection_name = serializers.ReadOnlyField(
+        source="collection.name"
+    )
+
     images = ItemImageSerializer(
         many=True,
         read_only=True
@@ -40,6 +44,7 @@ class ItemSerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "collection",
+            "collection_name",
             "name",
             "description",
             "images",
