@@ -1,67 +1,125 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";  
 import { useNavigate, useParams } from "react-router-dom";
+import { apiFetch } from "../../api"; 
 import "./ItemPage.css";
 
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockItem e substituir por chamada à API:
-// const [item, setItem] = useState(null)
-// useEffect(() => {
-//   fetch('url-da-api/item/' + id)
-//     .then(res => res.json())
-//     .then(data => setItem(data))
-// }, [id])
-// O back vai retornar: id, name, collection, description, images, owner
-
-const mockItem = {
-  id: 1,
-  name: "Hello Kit - McDonalds 2025",
-  collection: "McDonalds",
-  collectionId: 1,
-  description: "Aqui vai aparecer a descrição do item",
-  // TODO: images é uma lista de URLs de imagens do item vindas do back
-  images: [
-    "https://placehold.co/300x300/fce4ec/c2185b?text=Imagem+1",
-    "https://placehold.co/300x300/f8bbd0/ad1457?text=Imagem+2",
-    "https://placehold.co/300x300/f48fb1/880e4f?text=Imagem+3",
-  ],
-  // TODO: owner virá do back com os dados do dono da coleção
-  owner: {
-    id: 1,
-    name: "HelloKitty123",
-    avatar: "https://placehold.co/40x40/fce4ec/c2185b?text=A",
-  },
-};
-
 export default function ItemPage() {
-  // useParams pega o id da URL — ex: /item/1 → id = "1"
-  // TODO: usar o id para buscar o item correto na API
   const { id } = useParams();
-
   const navigate = useNavigate();
 
-  // Controla qual imagem está sendo exibida no momento
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [currentImage, setCurrentImage] = useState(0);
 
-  // Favorito — só visual por enquanto
-  // TODO: quando o back estiver pronto, o valor inicial virá da API
-  // TODO: ao clicar, salvar no banco: fetch('url-da-api/favoritar/item/' + id, { method: 'POST' })
-  const [favorited, setFavorited] = useState(false);
 
-  // Passa para a próxima imagem — volta para a primeira se chegar no fim
-  const nextImage = () => {
-    setCurrentImage((prev) =>
-      prev === mockItem.images.length - 1 ? 0 : prev + 1
-    );
+  const [favorited, setFavorited] = useState(false);
+  const [favoriteRecordId, setFavoriteRecordId] = useState(null); 
+
+  useEffect(() => {
+    const carregarItem = async () => {
+      try {
+        const [itemRes, favItemsRes] = await Promise.all([
+          apiFetch(`/api/items/${id}/`),
+          apiFetch("/api/favorite-items/"),
+        ]);
+
+        if (!itemRes.ok) {
+          setError("Item não encontrado.");
+          setLoading(false);
+          return;
+        }
+
+        const itemData = await itemRes.json();
+        setItem(itemData);
+
+        if (favItemsRes.ok) {
+          const favData = await favItemsRes.json();
+          const list = Array.isArray(favData) ? favData : favData.results ?? [];
+          const favRecord = list.find((f) => f.item === itemData.id);
+          if (favRecord) {
+            setFavorited(true);
+            setFavoriteRecordId(favRecord.id);
+          }
+        }
+      } catch (err) {
+        setError("Não foi possível carregar o item.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarItem();
+  }, [id]);
+
+
+  const handleToggleFavorite = async () => {
+    if (favorited) {
+      setFavorited(false);
+      try {
+        await apiFetch(`/api/favorite-items/${favoriteRecordId}/`, {
+          method: "DELETE",
+        });
+        setFavoriteRecordId(null);
+      } catch (err) {
+        setFavorited(true); // reverte se falhar
+      }
+    } else {
+      setFavorited(true);
+      try {
+        const res = await apiFetch("/api/favorite-items/", {
+          method: "POST",
+          body: JSON.stringify({ item: item.id }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteRecordId(data.id);
+        } else {
+          setFavorited(false); // reverte se o back recusar
+        }
+      } catch (err) {
+        setFavorited(false);
+      }
+    }
   };
+
+  const nextImage = () => {
+    const images = item?.images ?? [];
+    setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  if (loading) {
+    return (
+      <div className="item-page">
+        <p style={{ textAlign: "center", padding: 40 }}>Carregando...</p>
+      </div>
+    );
+  }
+
+  if (error || !item) {
+    return (
+      <div className="item-page">
+        <p style={{ textAlign: "center", color: "#e91e8c", padding: 40 }}>
+          {error || "Item não encontrado."}
+        </p>
+      </div>
+    );
+  }
+
+
+  const images = item.images ?? [];
+
+
+  const collectionId = item.collection;
 
   return (
     <div className="item-page">
 
-      {/* Cabeçalho com título e botão de voltar */}
+
       <header className="item-page-header">
         <button
           className="back-btn"
-          // Volta para a página anterior
           onClick={() => navigate(-1)}
           aria-label="Voltar"
         >
@@ -71,49 +129,69 @@ export default function ItemPage() {
         </button>
       </header>
 
-      {/* Conteúdo principal */}
       <main className="item-page-main">
 
-        {/* Nome do item e dono da coleção */}
+
         <div className="item-top-info">
           <div>
-            {/* TODO: item.name e item.collection virão do back */}
-            <h2 className="item-name">{mockItem.name}</h2>
-            <p className="item-collection"
-            // Ao clicar na coleção, navega para a página da coleção
-            onClick={() => navigate(`/colecao/${mockItem.collectionId}`)}> Coleção: {mockItem.collection}</p>
+
+            <h2 className="item-name">{item.name}</h2>
+            <p
+              className="item-collection"
+              onClick={() => navigate(`/colecao/${collectionId}`)}
+            >
+
+              Coleção: {collectionId}
+            </p>
           </div>
 
-          {/* Dono da coleção — ao clicar vai para o perfil dele */}
-          {/* TODO: owner.name e owner.avatar virão do back */}
-          {/* TODO: criar a página /perfil/:id e linkar aqui */}
-          <div
-            className="item-owner"
-            onClick={() => navigate(`/perfil-usuario/${mockItem.owner.id}`)}
-            style={{ cursor: "pointer" }}
-          >
-            <span className="item-owner-name">{mockItem.owner.name}</span>
-            <img
+          <div className="item-owner">
+            <span className="item-owner-name">{item.owner}</span>
+            <div
               className="item-owner-avatar"
-              src={mockItem.owner.avatar}
-              alt={mockItem.owner.name}
-            />
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "#fce4ec",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                color: "#c2185b",
+                fontWeight: 600,
+              }}
+            >
+              {item.owner?.[0]?.toUpperCase() ?? "?"}
+            </div>
           </div>
         </div>
 
-        {/* Galeria de imagens do item */}
         <div className="item-gallery">
 
-          {/* Imagem atual */}
-          {/* TODO: mockItem.images são URLs vindas do back */}
-          <img
-            className="item-gallery-image"
-            src={mockItem.images[currentImage]}
-            alt={mockItem.name}
-          />
+          {images.length > 0 ? (
+            <img
+              className="item-gallery-image"
+              src={images[currentImage].image}
+              alt={item.name}
+            />
+          ) : (
+            <div
+              className="item-gallery-image"
+              style={{
+                background: "#fce4ec",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#c2185b",
+                fontSize: 14,
+              }}
+            >
+              Sem imagem
+            </div>
+          )}
 
-          {/* Seta para próxima imagem — só aparece se tiver mais de 1 imagem */}
-          {mockItem.images.length > 1 && (
+          {images.length > 1 && (
             <button
               className="gallery-arrow"
               onClick={nextImage}
@@ -125,11 +203,9 @@ export default function ItemPage() {
             </button>
           )}
 
-          {/* Botão de favoritar */}
-          {/* TODO: quando o back estiver pronto, salvar no banco ao clicar */}
           <button
             className="item-heart-btn"
-            onClick={() => setFavorited(!favorited)}
+            onClick={handleToggleFavorite}
             aria-label={favorited ? "Desfavoritar" : "Favoritar"}
           >
             {favorited ? (
@@ -143,10 +219,9 @@ export default function ItemPage() {
             )}
           </button>
 
-          {/* Indicador de qual imagem está sendo exibida (pontos) */}
-          {mockItem.images.length > 1 && (
+          {images.length > 1 && (
             <div className="gallery-dots">
-              {mockItem.images.map((_, i) => (
+              {images.map((_, i) => (
                 <span
                   key={i}
                   className={`gallery-dot ${i === currentImage ? "active" : ""}`}
@@ -157,12 +232,10 @@ export default function ItemPage() {
           )}
         </div>
 
-        {/* Descrição do item */}
         <div className="item-description">
           <p className="item-description-label">Descrição</p>
-          {/* TODO: mockItem.description virá do back */}
           <div className="item-description-box">
-            {mockItem.description || ""}
+            {item.description || ""}
           </div>
         </div>
 
