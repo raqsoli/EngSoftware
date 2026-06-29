@@ -5,13 +5,38 @@ from .models import (
     FavoriteCollection
 )
 
+from items.models import Item
+from items.serializers import ItemSerializer
+
+from collections_app.models import Collection
+from collections_app.serializers import CollectionSerializer
+
 
 class FavoriteItemSerializer(serializers.ModelSerializer):
 
+    item = ItemSerializer(
+        read_only=True
+    )
+
+    item_id = serializers.PrimaryKeyRelatedField(
+        queryset=Item.objects.all(),
+        source="item",
+        write_only=True
+    )
+
     class Meta:
         model = FavoriteItem
-        fields = "__all__"
-        read_only_fields = ["user"]
+
+        fields = [
+            "id",
+            "user",
+            "item",
+            "item_id"
+        ]
+
+        read_only_fields = [
+            "user"
+        ]
 
     def validate(self, attrs):
 
@@ -31,10 +56,29 @@ class FavoriteItemSerializer(serializers.ModelSerializer):
 
 class FavoriteCollectionSerializer(serializers.ModelSerializer):
 
+    collection = CollectionSerializer(
+        read_only=True
+    )
+
+    collection_id = serializers.PrimaryKeyRelatedField(
+        queryset=Collection.objects.all(),
+        source="collection",
+        write_only=True
+    )
+
     class Meta:
         model = FavoriteCollection
-        fields = "__all__"
-        read_only_fields = ["user"]
+
+        fields = [
+            "id",
+            "user",
+            "collection",
+            "collection_id"
+        ]
+
+        read_only_fields = [
+            "user"
+        ]
 
     def validate(self, attrs):
 
