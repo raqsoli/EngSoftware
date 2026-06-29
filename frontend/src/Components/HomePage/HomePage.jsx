@@ -1,65 +1,13 @@
-// useState: gerencia estados (ex: favorito ligado/desligado)
-// useRef: controla o scroll horizontal da seta
-// TODO: quando o back estiver pronto, adicionar useEffect
-// useEffect será responsável por buscar os dados da API assim que a página carregar
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../api";
 import "./HomePage.css";
 
-// TODO: substituir por chamada à API quando o back estiver pronto
-// remover mockItems e substituir por chamada à API:
-// const [items, setItems] = useState([])
-// useEffect(() => {
-//   fetch('url-da-api/itens/populares')
-//     .then(res => res.json())
-//     .then(data => setItems(data))
-// }, [])
-// O back vai retornar uma lista com: id, name, collection, image
-//página abre → useEffect roda → fetch busca dados na API
-// → dados chegam → setItems preenche a lista → cards aparecem na tela
-const mockItems = [
-  { id: 1, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+1" },
-  { id: 2, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+2" },
-  { id: 3, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+3" },
-  { id: 4, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+4" },
-  { id: 5, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+5" },
-];
-
-// TODO: substituir por chamada à API quando o back estiver pronto
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockCollections e substituir por chamada à API:
-// const [collections, setCollections] = useState([])
-// useEffect(() => {
-//   fetch('url-da-api/colecoes/populares')
-//     .then(res => res.json())
-//     .then(data => setCollections(data))
-// }, [])
-// O back vai retornar uma lista com: id, name, owner, hearts, images
-const mockCollections = [
-  {
-    id: 1,
-    name: "McDonalds Maio 2025 (HK)",
-    owner: "Nome do Dono Coleção",
-    hearts: 2000,
-    images: [
-        "https://placehold.co/120x120/fce4ec/c2185b?text=HK+A",
-        "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+B",
-        "https://placehold.co/120x120/f48fb1/880e4f?text=HK+C",
-        "https://placehold.co/120x120/f06292/c2185b?text=HK+D",
-    ],
-  },
-  { id: 2, name: "Coleção 2", owner: "Dono 2", hearts: 340, images: [] },
-  { id: 3, name: "Coleção 3", owner: "Dono 3", hearts: 120, images: [] },
-  { id: 4, name: "Coleção 4", owner: "Dono 4", hearts: 88, images: [] },
-];
-
-//definir q vai aparecer inves de 2000 -> 2k (não muda com a vinda do back)
 function formatHearts(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "k";
   return n;
 }
 
-// (não muda com a vinda do back) ela se baseia no que o filled recebe, filled true coracao cheio, filled false coracao vazio, codigo do path é as coordernadas do icon
 function HeartIcon({ filled }) {
   if (filled) {
     return (
@@ -75,46 +23,40 @@ function HeartIcon({ filled }) {
   );
 }
 
-//essa função recebe os dados de um item especifico que virá da API
-function ItemCard({ item }) {
-  //hoje começa com false(coração vazio), mas com o back vai comecar com o valor real do banco 
-  //useState(item.favoritado) // true ou false vindo do banco
-  const [favorited, setFavorited] = useState(false);
-  const navigate = useNavigate(); // adiciona isso
-//na seguinte: - <img src={item.image} alt={item.name} /> item.image será a URL real da imagem cadastrada no banco. O item.imagem não muda
-// essa linha nao muda so o valor que chega nela
-//{item.name} e {item.collection}
-//Com o back — virão do banco de dados com os nomes reais. Essa linha também não muda.
+// favoriteItems agora é um Map: { itemId -> favoriteRecordId }
+// assim sabemos o ID do registro de favorito pra fazer o DELETE
+function ItemCard({ item, favoriteItems, onToggleFavorite, collectionNameMap }) {
+  const favorited = favoriteItems.has(item.id);
+  const navigate = useNavigate();
 
-//linha 98 - onClick={() => setFavorited(!favorited)}
-//Com o back — além de mudar visualmente, vai precisar chamar a API pra salvar no banco:
-//onClick={() => {
-//  setFavorited(!favorited) // continua mudando visualmente
-//  fetch('url-da-api/favoritar/item/' + item.id, { method: 'POST' }) // novo: salva no banco
-//}}
-//fetch -> função do js que faz uma requisição para o servidor (pede ou envia uma ação para o back-end)
-//url da api -> vai ter que me passar
-///favoritar/item -> rota (que é um endereço que vc acessa para fazer alguma coisa no servidor)
-//method: 'POST' cria ou envia algo novo para o banco
+  // o serializer retorna "images" (não "uploaded_images") no GET
+  const imageUrl =
+    Array.isArray(item.images) && item.images.length > 0
+      ? item.images[0].image
+      : "https://placehold.co/200x200/fce4ec/c2185b?text=Sem+Imagem";
+
+  // 🆕 resolve o nome da coleção pelo id usando o Map
+  const collectionName = collectionNameMap?.get(item.collection) ?? `Coleção ${item.collection}`;
+
   return (
-    <div 
-        className="item-card"
-        onClick={() => navigate(`/item/${item.id}`)}
-        style={{ cursor: 'pointer' }}
+    <div
+      className="item-card"
+      onClick={() => navigate(`/item/${item.id}`)}
+      style={{ cursor: "pointer" }}
     >
       <div className="item-card-image">
-        <img src={item.image} alt={item.name} />
+        <img src={imageUrl} alt={item.name} />
       </div>
       <div className="item-card-info">
         <div>
           <p className="item-card-name">{item.name}</p>
-          <p className="item-card-collection">Coleção: {item.collection}</p>
+          <p className="item-card-collection">Coleção: {collectionName}</p>
         </div>
         <button
           className="heart-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setFavorited(!favorited);
+            onToggleFavorite("item", item.id, favorited);
           }}
           aria-label={favorited ? "Desfavoritar" : "Favoritar"}
         >
@@ -125,67 +67,60 @@ function ItemCard({ item }) {
   );
 }
 
-// Card de cada coleção — recebe os dados da coleção como prop
-function CollectionCard({ collection }) {
-    // favorited: controla visualmente se o coração está cheio ou vazio
-    // TODO: quando o back estiver pronto, o valor inicial virá da API
-  const [favorited, setFavorited] = useState(false);
+// favoriteCollections agora é um Map: { collectionId -> favoriteRecordId }
+function CollectionCard({ collection, favoriteCollections, onToggleFavorite }) {
+  const favorited = favoriteCollections.has(collection.id);
   const navigate = useNavigate();
-    //collection.images são do back
+
+  const images = Array.isArray(collection.images) ? collection.images : [];
+
   return (
     <div
       className="collection-card"
-      // Ao clicar na coleção, navega para a página da coleção
-      // TODO: a página /colecao/:id vai buscar os dados dessa coleção no back
       onClick={() => navigate(`/colecao/${collection.id}`)}
     >
-      {collection.images.length > 0 ? (
+      {images.length > 0 ? (
         <div className="collection-img-grid">
-          {collection.images.slice(0, 4).map((img, i) => (
+          {images.slice(0, 4).map((img, i) => (
             <img key={i} src={img} alt="" />
           ))}
         </div>
       ) : (
-        // Exibe um bloco vazio quando não há imagens ainda
         <div className="collection-empty" />
       )}
 
       <div className="collection-card-info">
         <div>
-            {/* collection.name e collection.owner: dados que virão do back */}
           <p className="collection-card-name">{collection.name}</p>
-          <p className="collection-card-owner">{collection.owner}</p>
+          <p className="collection-card-owner">
+            {collection.owner_username ?? collection.owner ?? ""}
+          </p>
         </div>
         <div className="collection-hearts">
           <button
             className="heart-btn"
             onClick={(e) => {
               e.stopPropagation();
-              setFavorited(!favorited); //so muda o coracao na tela
-              //fetch('url-da-api/favoritar/colecao/' + collection.id, { method: 'POST' }) // novo: avisa o banco
+              onToggleFavorite("collection", collection.id, favorited);
             }}
-            aria-label={favorited ? "Desfavoritar" : "Favoritar"} //acessibilidade?
+            aria-label={favorited ? "Desfavoritar" : "Favoritar"}
           >
             <HeartIcon filled={favorited} />
           </button>
-          <span className="hearts-count">{formatHearts(collection.hearts)}</span>
+          <span className="hearts-count">
+            {formatHearts(collection.hearts_count ?? collection.hearts ?? 0)}
+          </span>
         </div>
       </div>
     </div>
   );
-} //o valor de collection hearts ali de cima hoje vem do mock mas depois vai vir do back
+}
 
-// Componente de scroll horizontal com seta
-// useRef: mantém referência da div para controlar o scroll programaticamente
-// Não muda com o back — é 100% visual
 function HorizontalScroll({ children }) {
-// isso fica, é só pra mover a lista quando clicar na seta
   const ref = useRef(null);
-
   const scroll = () => {
     ref.current?.scrollBy({ left: 220, behavior: "smooth" });
   };
-
   return (
     <div className="scroll-wrapper">
       <div ref={ref} className="scroll-track">
@@ -202,8 +137,141 @@ function HorizontalScroll({ children }) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  // Estado do campo de busca da navbar
-  const [searchInput, setSearchInput] = useState("");
+
+  const [items, setItems] = useState([]);
+  const [collections, setCollections] = useState([]);
+
+  // Map: itemId -> favoriteRecordId (id do registro na tabela FavoriteItem)
+  // Exemplo: { 3: 7 } significa que o item 3 está favoritado e o registro é o id 7
+  // Precisamos do favoriteRecordId para fazer o DELETE /api/favorite-items/{favoriteRecordId}/
+  const [favoriteItems, setFavoriteItems] = useState(new Map());
+
+  // Map: collectionId -> favoriteRecordId
+  const [favoriteCollections, setFavoriteCollections] = useState(new Map());
+
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [profileId, setProfileId] = useState(null); // 🆕 id do usuário logado
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // 🆕 restaurado
+
+  // 🆕 Map de id → nome da coleção, pra resolver "Coleção: 1" → "Coleção: Hello Kitty"
+  const collectionNameMap = new Map(collections.map((c) => [c.id, c.name]));
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const [itemsRes, collectionsRes, favItemsRes, favColsRes, profileRes] =
+          await Promise.all([
+            apiFetch("/api/items/"),
+            apiFetch("/api/collections/"),
+            apiFetch("/api/favorite-items/"),
+            apiFetch("/api/favorite-collections/"),
+            apiFetch("/api/profile/"),
+          ]);
+
+        if (itemsRes.ok) {
+          const data = await itemsRes.json();
+          setItems(Array.isArray(data) ? data : data.results ?? []);
+        }
+
+        if (collectionsRes.ok) {
+          const data = await collectionsRes.json();
+          setCollections(Array.isArray(data) ? data : data.results ?? []);
+        }
+
+        // Monta o Map: itemId -> favoriteRecordId
+        // O serializer retorna { id, user, item } — "item" é o id do item, "id" é o id do registro
+        if (favItemsRes.ok) {
+          const data = await favItemsRes.json();
+          const list = Array.isArray(data) ? data : data.results ?? [];
+          const map = new Map(list.map((f) => [f.item, f.id]));
+          setFavoriteItems(map);
+        }
+
+        // Monta o Map: collectionId -> favoriteRecordId
+        // O serializer retorna { id, user, collection }
+        if (favColsRes.ok) {
+          const data = await favColsRes.json();
+          const list = Array.isArray(data) ? data : data.results ?? [];
+          const map = new Map(list.map((f) => [f.collection, f.id]));
+          setFavoriteCollections(map);
+        }
+
+        if (profileRes.ok) {
+          const data = await profileRes.json();
+          setAvatarUrl(data.image ?? null);
+          setProfileId(data.id ?? null); // 🆕 salva o id do usuário logado
+        }
+      } catch (err) {
+        setError("Não foi possível carregar os dados.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarDados();
+  }, []);
+
+  // Favoritar: POST /api/favorite-items/ com body { item: id }
+  // Desfavoritar: DELETE /api/favorite-items/{favoriteRecordId}/
+  const handleToggleFavorite = async (type, id, currentlyFavorited) => {
+    const endpoint =
+      type === "item" ? "/api/favorite-items/" : "/api/favorite-collections/";
+    const bodyKey = type === "item" ? "item" : "collection";
+    const setMap = type === "item" ? setFavoriteItems : setFavoriteCollections;
+    const currentMap = type === "item" ? favoriteItems : favoriteCollections;
+
+    if (currentlyFavorited) {
+      // Desfavoritar — pega o id do registro de favorito no Map
+      const favoriteRecordId = currentMap.get(id);
+
+      // Atualiza visualmente na hora
+      setMap((prev) => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
+
+      // Chama o back: DELETE /api/favorite-items/{favoriteRecordId}/
+      try {
+        await apiFetch(`${endpoint}${favoriteRecordId}/`, { method: "DELETE" });
+      } catch (err) {
+        // Se falhar, reverte visualmente
+        setMap((prev) => new Map(prev).set(id, favoriteRecordId));
+      }
+    } else {
+      // Favoritar — atualiza visualmente antes (otimista)
+      setMap((prev) => new Map(prev).set(id, null)); // null temporário até o back responder
+
+      try {
+        // POST /api/favorite-items/ com body { item: id }
+        const res = await apiFetch(endpoint, {
+          method: "POST",
+          body: JSON.stringify({ [bodyKey]: id }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // Atualiza o Map com o id real do registro criado
+          setMap((prev) => new Map(prev).set(id, data.id));
+        } else {
+          // Reverte se o back recusar (ex: já favoritado)
+          setMap((prev) => {
+            const next = new Map(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      } catch (err) {
+        setMap((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    }
+  };
 
   const handleSearch = () => {
     const trimmed = searchInput.trim();
@@ -214,22 +282,25 @@ export default function HomePage() {
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
   };
+
   return (
     <div className="homepage">
-      {/* Navbar fixa no topo*/}
       <nav className="navbar">
-
-        {/* Avatar do usuário logado */}
-        {/* TODO: quando o back estiver pronto, exibir a foto real do usuário */}
-        <div className="navbar-avatar" onClick={() => navigate('/perfil/1')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
+        <div className="navbar-avatar" onClick={() => profileId && navigate(`/perfil/${profileId}`)}>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Perfil"
+              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }}
+            />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          )}
         </div>
 
-        {/* Barra de busca */}
-        {/* TODO: quando o back estiver pronto, chamar a API com o texto digitado */}
         <div className="navbar-search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
@@ -248,9 +319,7 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Botão de configurações */}
-        <button className="navbar-settings" aria-label="Configurações"
-        onClick={() => navigate('/configuracoes')}>
+        <button className="navbar-settings" aria-label="Configurações" onClick={() => navigate("/configuracoes")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -258,34 +327,50 @@ export default function HomePage() {
         </button>
       </nav>
 
-      {/* Conteúdo
-       mockItems tem 5 itens
-        → map percorre os 5
-        → cria 5 ItemCards automaticamente 
-         com o BACK: {items.map((item) => (
-        <ItemCard key={item.id} item={item} />
-        ))} 
-         item={item} -> Passa os dados daquele item específico para dentro do ItemCard*/}
       <main className="main-content">
-        <section className="section">
-          <h2 className="section-title">Itens Populares</h2>
-          <HorizontalScroll>
-            {/* TODO: trocar mockItems por items vindo da API */}
-            {mockItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </HorizontalScroll>
-        </section>
+        {loading && <p style={{ textAlign: "center", padding: 32 }}>Carregando...</p>}
+        {error && <p style={{ textAlign: "center", color: "#e91e8c", padding: 32 }}>{error}</p>}
 
-        <section className="section">
-          <h2 className="section-title">Coleções Populares</h2>
-          <HorizontalScroll>
-            {/* TODO: trocar mockCollections por collections vindo da API */}
-            {mockCollections.map((col) => (
-              <CollectionCard key={col.id} collection={col} />
-            ))}
-          </HorizontalScroll>
-        </section>
+        {!loading && !error && (
+          <>
+            <section className="section">
+              <h2 className="section-title">Itens Populares</h2>
+              {items.length === 0 ? (
+                <p style={{ color: "#aaa", padding: "0 24px" }}>Nenhum item encontrado.</p>
+              ) : (
+                <HorizontalScroll>
+                  {items.map((item) => (
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      favoriteItems={favoriteItems}
+                      onToggleFavorite={handleToggleFavorite}
+                      collectionNameMap={collectionNameMap} // 🆕
+                    />
+                  ))}
+                </HorizontalScroll>
+              )}
+            </section>
+
+            <section className="section">
+              <h2 className="section-title">Coleções Populares</h2>
+              {collections.length === 0 ? (
+                <p style={{ color: "#aaa", padding: "0 24px" }}>Nenhuma coleção encontrada.</p>
+              ) : (
+                <HorizontalScroll>
+                  {collections.map((col) => (
+                    <CollectionCard
+                      key={col.id}
+                      collection={col}
+                      favoriteCollections={favoriteCollections}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </HorizontalScroll>
+              )}
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
