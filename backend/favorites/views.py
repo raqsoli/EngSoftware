@@ -11,6 +11,7 @@ from .serializers import (
     FavoriteCollectionSerializer
 )
 
+
 class FavoriteItemViewSet(viewsets.ModelViewSet):
 
     serializer_class = FavoriteItemSerializer
@@ -22,12 +23,17 @@ class FavoriteItemViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return FavoriteItem.objects.filter(
             user=self.request.user
+        ).select_related(
+            "item",
+            "item__collection"
         )
+
 
     def perform_create(self, serializer):
         serializer.save(
             user=self.request.user
         )
+
 
 class FavoriteCollectionViewSet(viewsets.ModelViewSet):
 
@@ -40,7 +46,10 @@ class FavoriteCollectionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return FavoriteCollection.objects.filter(
             user=self.request.user
+        ).select_related(
+            "collection"
         )
+
 
     def perform_create(self, serializer):
         serializer.save(
