@@ -53,7 +53,7 @@ export default function CollectionPage() {
             ? favorites
             : favorites.results ?? [];
           const fav = list.find(
-            f => f.collection === collectionData.id
+            f => f.collection?.id === collectionData.id
           );
 
           if (fav) {
@@ -100,7 +100,7 @@ export default function CollectionPage() {
           {
             method: "POST",
             body: JSON.stringify({
-              collection: collection.id
+              collection_id: collection.id
             })
           }
         );
