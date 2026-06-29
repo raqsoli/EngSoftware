@@ -1,6 +1,10 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import (
+    JSONParser,
+    MultiPartParser,
+    FormParser
+)
 
 from .models import Item
 from .serializers import ItemSerializer
@@ -17,6 +21,7 @@ class ItemViewSet(viewsets.ModelViewSet):
     ]
 
     parser_classes = [
+        JSONParser,
         MultiPartParser,
         FormParser
     ]
