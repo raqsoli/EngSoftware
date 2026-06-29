@@ -15,5 +15,15 @@ class CollectionViewSet(viewsets.ModelViewSet):
         IsOwnerOrReadOnly
     ]
 
+    def get_queryset(self):
+        queryset = Collection.objects.all()
+
+        owner = self.request.query_params.get("owner")
+
+        if owner:
+            queryset = queryset.filter(owner_id=owner)
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
