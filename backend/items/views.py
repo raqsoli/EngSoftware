@@ -1,11 +1,10 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Item
 from .serializers import ItemSerializer
 from users.permissions import IsOwnerOrReadOnly
-
-from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -21,6 +20,16 @@ class ItemViewSet(viewsets.ModelViewSet):
         MultiPartParser,
         FormParser
     ]
+
+    def get_queryset(self):
+        queryset = Item.objects.all()
+
+        owner = self.request.query_params.get("owner")
+
+        if owner:
+            queryset = queryset.filter(owner_id=owner)
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
