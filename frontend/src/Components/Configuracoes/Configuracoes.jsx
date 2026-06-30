@@ -1,24 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import { limparTokens } from "../../api";
 import "./Configuracoes.css";
 
 export default function ConfiguracoesPage() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // TODO: quando o back estiver pronto, substituir por chamada à API:
-    // fetch('url-da-api/logout', {
-    //   method: 'POST',
-    //   headers: { 'Authorization': 'Bearer ' + token }
-    // })
-    // .then(() => {
-    //   localStorage.clear();
-    //   sessionStorage.clear();
-    //   navigate('/');
-    // })
-
-    // Por enquanto, simula o logout direto no front
-    localStorage.clear();
+    limparTokens();
+  
+    // caso o projeto utilize sessionStorage para alguma outra informação
     sessionStorage.clear();
+  
     navigate("/");
   };
 
