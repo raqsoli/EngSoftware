@@ -1,41 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiFetch } from "../../api";
 import "./EditarColecao.css";
-
-// ============================================================
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-// TODO: remover mockCollection e substituir por chamada à API:
-// const [collection, setCollection] = useState(null)
-// useEffect(() => {
-//   fetch('url-da-api/colecao/' + id)
-//     .then(res => res.json())
-//     .then(data => setCollection(data))
-// }, [id])
-// O back vai retornar: id, name, description, items
-// ============================================================
-const mockCollection = {
-  id: 1,
-  name: "Hello Kitty - McDonalds 2025",
-  description: "",
-  items: [
-    { id: 1, image: "https://placehold.co/80x80/fce4ec/c2185b?text=HK+1" },
-    { id: 2, image: "https://placehold.co/80x80/f8bbd0/ad1457?text=HK+2" },
-    { id: 3, image: "https://placehold.co/80x80/f48fb1/880e4f?text=HK+3" },
-  ],
-};
-
-// TODO: substituir por verificação real com o token do usuário logado
-// O back valida se a coleção pertence ao usuário — aqui simulamos que é dono
-const mockIsOwner = true;
 
 export default function EditCollectionPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [name, setName] = useState(mockCollection.name);
-  const [description, setDescription] = useState(mockCollection.description);
+  const [collection, setCollection] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [items, setItems] = useState(mockCollection.items);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [items, setItems] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
 
   const [nameSaved, setNameSaved] = useState(false);
   const [descriptionSaved, setDescriptionSaved] = useState(false);
@@ -51,50 +30,167 @@ export default function EditCollectionPage() {
   const [deleteItemSuccess, setDeleteItemSuccess] = useState(false);
   const [deleteItemLoading, setDeleteItemLoading] = useState(false);
 
-  const handleSaveName = () => {
+  // ── Carrega a coleção e os itens dela ──────────────────────
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [colRes, profileRes] = await Promise.all([
+          apiFetch(`/api/collections/${id}/`),
+          apiFetch("/api/profile/"),
+        ]);
+
+        if (colRes.ok) {
+          const colData = await colRes.json();
+          setCollection(colData);
+          setName(colData.name);
+          setDescription(colData.description ?? "");
+
+          // A coleção não retorna a lista de itens com id próprio pra exclusão
+          // individual (o serializer só manda "images", que são URLs soltas).
+          // Por isso buscamos os itens reais filtrando por collection.
+          const itemsRes = await apiFetch(`/api/items/?collection=${id}`);
+          if (itemsRes.ok) {
+            const itemsData = await itemsRes.json();
+            const list = Array.isArray(itemsData) ? itemsData : itemsData.results ?? [];
+            setItems(list);
+          }
+
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            setIsOwner(profile.username === colData.owner);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [id]);
+
+  const handleSaveName = async () => {
     setNameError("");
+
     if (name.trim() === "") {
       setNameError("O nome da coleção não pode ser vazio.");
       return;
     }
-    // TODO: fetch('url-da-api/colecao/' + id + '/nome', { method: 'PUT', body: JSON.stringify({ name }) })
-    setNameSaved(true);
-    setTimeout(() => setNameSaved(false), 2000);
+
+    try {
+      const res = await apiFetch(`/api/collections/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      });
+
+      if (!res.ok) {
+        alert("Erro ao salvar o nome.");
+        return;
+      }
+
+      setNameSaved(true);
+      setTimeout(() => setNameSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar o nome.");
+    }
   };
 
-  const handleSaveDescription = () => {
-    // TODO: fetch('url-da-api/colecao/' + id + '/descricao', { method: 'PUT', body: JSON.stringify({ description }) })
-    setDescriptionSaved(true);
-    setTimeout(() => setDescriptionSaved(false), 2000);
+  const handleSaveDescription = async () => {
+    try {
+      const res = await apiFetch(`/api/collections/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify({ description }),
+      });
+
+      if (!res.ok) {
+        alert("Erro ao salvar a descrição.");
+        return;
+      }
+
+      setDescriptionSaved(true);
+      setTimeout(() => setDescriptionSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar a descrição.");
+    }
   };
 
-   const handleConfirmDeleteCollection = () => {
+  const handleConfirmDeleteCollection = async () => {
     setDeleteCollectionLoading(true);
 
-    // TODO: fetch('url-da-api/colecao/' + id, { method: 'DELETE' })
+    try {
+      const res = await apiFetch(`/api/collections/${id}/`, {
+        method: "DELETE",
+      });
 
-    setTimeout(() => {
-      setDeleteCollectionLoading(false);
+      if (!res.ok) {
+        alert("Erro ao excluir coleção.");
+        setDeleteCollectionLoading(false);
+        return;
+      }
+
       setShowDeleteCollectionModal(false);
       setDeleteCollectionSuccess(true);
       setTimeout(() => navigate(-1), 2000);
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir coleção.");
+    } finally {
+      setDeleteCollectionLoading(false);
+    }
   };
 
-
-  const handleConfirmDeleteItem = () => {
+  // Combinado com o back: todo item OBRIGATORIAMENTE pertence a uma
+  // coleção (collection não aceita null). Por isso não existe "remover
+  // item da coleção" — a ação aqui é excluir o item de fato.
+  const handleConfirmDeleteItem = async () => {
     setDeleteItemLoading(true);
 
-    // TODO: fetch('url-da-api/colecao/' + id + '/item/' + itemToDelete, { method: 'DELETE' })
+    try {
+      const res = await apiFetch(`/api/items/${itemToDelete}/`, {
+        method: "DELETE",
+      });
 
-    setTimeout(() => {
-      setItems(items.filter((it) => it.id !== itemToDelete)); // 🆕 remove o item da lista na tela
-      setDeleteItemLoading(false);
-      setItemToDelete(null); // 🆕 fecha o modal
+      if (!res.ok) {
+        alert("Erro ao excluir item.");
+        setDeleteItemLoading(false);
+        return;
+      }
+
+      setItems((prev) => prev.filter((it) => it.id !== itemToDelete));
+      setItemToDelete(null);
       setDeleteItemSuccess(true);
-      setTimeout(() => setDeleteItemSuccess(false), 2000); // 🆕 some o toast depois de 2s
-    }, 1000);
+      setTimeout(() => setDeleteItemSuccess(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao remover item da coleção.");
+    } finally {
+      setDeleteItemLoading(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="edit-collection-page">
+        <main className="edit-collection-main">
+          <p>Carregando...</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!collection) {
+    return (
+      <div className="edit-collection-page">
+        <main className="edit-collection-main">
+          <p>Coleção não encontrada.</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="edit-collection-page">
@@ -156,32 +252,38 @@ export default function EditCollectionPage() {
           <div className="edit-collection-field">
             <label className="edit-collection-label">Itens</label>
             <div className="edit-collection-items-grid">
-              {items.map((item) => (
-                <div key={item.id} className="edit-collection-item-wrap">
-                  <img src={item.image} alt={`Item ${item.id}`} />
+              {items.map((item) => {
+                // O serializer de Item provavelmente tem um campo "images"
+                // com lista de objetos {id, image}. Ajustar aqui se o
+                // formato real vier diferente.
+                const thumb = item.images?.[0]?.image ?? item.image ?? "";
 
-                  {mockIsOwner && (
-                    <button
-                      className="edit-collection-remove-btn"
-                      aria-label="Remover item"
-                      onClick={() => setItemToDelete(item.id)} // 🆕 antes não existia (era disabled)
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6M14 11v6"/>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div key={item.id} className="edit-collection-item-wrap">
+                    <img src={thumb} alt={item.name ?? `Item ${item.id}`} />
+
+                    {isOwner && (
+                      <button
+                        className="edit-collection-remove-btn"
+                        aria-label="Excluir item"
+                        onClick={() => setItemToDelete(item.id)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          <path d="M10 11v6M14 11v6"/>
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Botão excluir — visível apenas para o dono da coleção */}
-          {/* TODO: mockIsOwner será substituído pela verificação real do token */}
-          {mockIsOwner && (
+          {isOwner && (
             <div className="edit-collection-delete-row">
               <button
                 className="edit-collection-delete-btn"
@@ -195,7 +297,7 @@ export default function EditCollectionPage() {
         </div>
       </main>
 
-      {/* Modal de confirmação de exclusão */}
+      {/* Modal de confirmação de exclusão da coleção */}
       {showDeleteCollectionModal && (
         <div className="delete-modal-overlay">
           <div className="delete-modal">
@@ -222,11 +324,12 @@ export default function EditCollectionPage() {
         </div>
       )}
 
+      {/* Modal de confirmação de remoção de item da coleção */}
       {itemToDelete !== null && (
         <div className="delete-modal-overlay">
           <div className="delete-modal">
             <p className="delete-modal-text">
-              Tem certeza que deseja excluir este item da coleção? Essa ação não pode ser desfeita.
+              Tem certeza que deseja excluir este item? Como todo item precisa pertencer a uma coleção, não é possível apenas removê-lo daqui — ele será excluído por completo. Essa ação não pode ser desfeita.
             </p>
             <div className="delete-modal-actions">
               <button
@@ -253,7 +356,7 @@ export default function EditCollectionPage() {
           Coleção excluída com sucesso!
         </div>
       )}
-      {deleteItemSuccess && ( // 🆕 NOVO — toast exclusivo do item
+      {deleteItemSuccess && (
         <div className="delete-success-toast">
           Item excluído com sucesso!
         </div>
