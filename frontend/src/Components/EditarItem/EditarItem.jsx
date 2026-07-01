@@ -1,61 +1,115 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiFetch, API_BASE_URL } from "../../api";
 import "./EditarItem.css";
 
-const mockItem = {
-  id: 1,
-  name: "Hello Kitty - McDonalds 2025",
-  collectionId: 1,
-  description: "",
-  images: [
-    { preview: "https://placehold.co/120x120/fce4ec/c2185b?text=HK+1", isExisting: true },
-    { preview: "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+2", isExisting: true },
-    { preview: "https://placehold.co/120x120/f48fb1/880e4f?text=HK+3", isExisting: true },
-  ],
-};
-
-const mockCollections = [
-  { id: 1, name: "McDonalds" },
-  { id: 2, name: "Sanrio" },
-  { id: 3, name: "Disney" },
-];
-
-// TODO: substituir por verificação real com o token do usuário logado
-// O back valida se o item pertence ao usuário — aqui simulamos que é dono
-const mockIsOwner = true;
-
 const MAX_IMAGES = 3;
+
+// Monta a URL completa da imagem, caso o back retorne um path relativo (ex: /media/...)
+function resolveImageUrl(path) {
+  if (!path) return path;
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+}
 
 export default function EditItemPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [name, setName] = useState(mockItem.name);
-  const [collectionId, setCollectionId] = useState(mockItem.collectionId);
-  const [description, setDescription] = useState(mockItem.description);
-  const [images, setImages] = useState(mockItem.images);
+  const [item, setItem] = useState(null);
 
-  const [nameSaved, setNameSaved] = useState(false);
-  const [collectionSaved, setCollectionSaved] = useState(false);
-  const [descriptionSaved, setDescriptionSaved] = useState(false);
+  const [name, setName] = useState("");
+  const [collectionId, setCollectionId] = useState("");
+  const [description, setDescription] = useState("");
+
+  // Cada imagem: { id?, preview, isExisting, file?, markedForDelete? }
+  const [images, setImages] = useState([]);
+
+  const [collections, setCollections] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
+
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [nameError, setNameError] = useState("");
-  const [imageError, setImageError] = useState(""); 
+  const [imageError, setImageError] = useState("");
 
   // Estados do modal de exclusão
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const handleRemoveImage = (index) => {
-    setImages(images.filter((_, i) => i !== index));
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [itemRes, profileRes] = await Promise.all([
+          apiFetch(`/api/items/${id}/`),
+          apiFetch("/api/profile/"),
+        ]);
+
+        let itemData = null;
+        let profile = null;
+
+        if (profileRes.ok) {
+          profile = await profileRes.json();
+        }
+
+        if (itemRes.ok) {
+          itemData = await itemRes.json();
+          setItem(itemData);
+          setName(itemData.name);
+          setDescription(itemData.description);
+          setCollectionId(itemData.collection);
+          setImages(
+            itemData.images.map((img) => ({
+              id: img.id,
+              preview: resolveImageUrl(img.image),
+              isExisting: true,
+              markedForDelete: false,
+            }))
+          );
+        }
+
+        // Busca só as coleções do usuário logado
+        if (profile) {
+          const collectionsRes = await apiFetch(`/api/collections/?owner=${profile.id}`);
+          if (collectionsRes.ok) {
+            const cols = await collectionsRes.json();
+            setCollections(Array.isArray(cols) ? cols : cols.results ?? []);
+          }
+
+          if (itemData) {
+            setIsOwner(profile.username === itemData.owner);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadData();
+  }, [id]);
+
+  // Quantas imagens vão "sobrar" visualmente (existentes não marcadas + novas)
+  const visibleImages = images.filter((img) => !img.markedForDelete);
+
+  const handleRemoveImage = (img, index) => {
+    if (img.isExisting) {
+      // Imagem existente: só marca para exclusão, deleta de fato ao salvar
+      setImages((prev) =>
+        prev.map((i) =>
+          i === img ? { ...i, markedForDelete: true } : i
+        )
+      );
+    } else {
+      // Imagem nova: remove direto do estado (ainda nem foi enviada)
+      setImages((prev) => prev.filter((i) => i !== img));
+    }
   };
 
   const handleAddImages = (e) => {
     const files = Array.from(e.target.files);
 
-    // 🆕 NOVO — valida o limite de 3 imagens antes de adicionar
-    if (images.length + files.length > MAX_IMAGES) {
+    if (visibleImages.length + files.length > MAX_IMAGES) {
       setImageError(`Você pode ter no máximo ${MAX_IMAGES} imagens.`);
       e.target.value = "";
       return;
@@ -63,67 +117,142 @@ export default function EditItemPage() {
 
     setImageError("");
 
-    // 🆕 ALTERADO — guarda o File real (isExisting: false = imagem nova, ainda não salva)
     const newImages = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       isExisting: false,
+      markedForDelete: false,
     }));
 
-    setImages([...images, ...newImages]);
+    setImages((prev) => [...prev, ...newImages]);
     e.target.value = "";
   };
 
-  const handleSaveName = () => {
-    setNameError("");
-    if (name.trim() === "") {
-      setNameError("O nome do item não pode ser vazio.");
-      return;
+  const handleSaveItem = async () => {
+    if (!name.trim()) {
+      setNameError("O nome do item é obrigatório.");
+      return false;
     }
-    // TODO: fetch('url-da-api/item/' + id + '/nome', { method: 'PUT', body: JSON.stringify({ name }) })
-    setNameSaved(true);
-    setTimeout(() => setNameSaved(false), 2000);
+
+    try {
+      const res = await apiFetch(`/api/items/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name,
+          description,
+          collection: collectionId,
+        }),
+      });
+
+      if (!res.ok) {
+        alert("Erro ao atualizar item.");
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao atualizar item.");
+      return false;
+    }
   };
 
-  const handleSaveCollection = () => {
-    // TODO: fetch('url-da-api/item/' + id + '/colecao', { method: 'PUT', body: JSON.stringify({ collectionId }) })
-    setCollectionSaved(true);
-    setTimeout(() => setCollectionSaved(false), 2000);
+  // Deleta no back as imagens existentes marcadas para exclusão
+  const handleDeleteMarkedImages = async () => {
+    const toDelete = images.filter((img) => img.isExisting && img.markedForDelete);
+
+    for (const img of toDelete) {
+      try {
+        const res = await apiFetch(`/api/item-images/${img.id}/`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) {
+          console.error(`Erro ao excluir imagem ${img.id}`);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
-  const handleSaveDescription = () => {
-    // TODO: fetch('url-da-api/item/' + id + '/descricao', { method: 'PUT', body: JSON.stringify({ description }) })
-    setDescriptionSaved(true);
-    setTimeout(() => setDescriptionSaved(false), 2000);
+  // Envia ao back as imagens novas (ainda não salvas)
+  const handleUploadNewImages = async () => {
+    const toUpload = images.filter((img) => !img.isExisting);
+
+    for (const img of toUpload) {
+      const formData = new FormData();
+      formData.append("image", img.file);
+
+      try {
+        const res = await apiFetch(`/api/items/${id}/images/`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          console.error("Erro ao enviar imagem", img.file?.name);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
-  // salva as imagens (separando o que é novo do que já existia)
-  const handleSaveImages = () => {
-    // monta o FormData só com as imagens NOVAS (File real)
-    const formData = new FormData();
-    images
-      .filter((img) => !img.isExisting)
-      .forEach((img) => formData.append('images', img.file));
+  // Botão único: salva dados do item + remove imagens marcadas + envia imagens novas
+  const handleSaveAll = async () => {
+    setSaveLoading(true);
 
-    // TODO: descomentar quando o back estiver pronto:
-    // fetch('url-da-api/item/' + id + '/imagens', {
-    //   method: 'POST', // ou PUT, dependendo do contrato definido com o back
-    //   headers: { Authorization: `Bearer ${localStorage.getItem('access')}` },
-    //   body: formData,
-    // })
+    try {
+      const itemSaved = await handleSaveItem();
+
+      if (!itemSaved) {
+        return;
+      }
+
+      await handleDeleteMarkedImages();
+      await handleUploadNewImages();
+
+      // Recarrega as imagens atualizadas do servidor para sincronizar ids/urls
+      const imagesRes = await apiFetch(`/api/items/${id}/images/`);
+      if (imagesRes.ok) {
+        const imagesData = await imagesRes.json();
+        setImages(
+          imagesData.map((img) => ({
+            id: img.id,
+            preview: resolveImageUrl(img.image),
+            isExisting: true,
+            markedForDelete: false,
+          }))
+        );
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar alterações.");
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    setDeleteLoading(true);
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await apiFetch(`/api/items/${id}/`, {
+        method: "DELETE",
+      });
 
-    // TODO: fetch('url-da-api/item/' + id, { method: 'DELETE' })
+      if (!res.ok) {
+        alert("Erro ao excluir.");
+        return;
+      }
 
-    setTimeout(() => {
-      setDeleteLoading(false);
-      setShowDeleteModal(false);
-      setDeleteSuccess(true);
-      setTimeout(() => navigate(-1), 2000);
-    }, 1000);
+      alert("Excluído com sucesso!");
+      navigate(-1);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -150,12 +279,12 @@ export default function EditItemPage() {
           {/* Grid de imagens */}
           <div className="edit-item-images-section">
             <div className="edit-item-images-grid">
-              {images.map((img, i) => (
-                <div key={i} className="edit-item-image-wrap">
+              {visibleImages.map((img, i) => (
+                <div key={img.id ?? `new-${i}`} className="edit-item-image-wrap">
                   <img src={img.preview} alt={`Imagem ${i + 1}`} />
                   <button
                     className="edit-item-remove-img-btn"
-                    onClick={() => handleRemoveImage(i)}
+                    onClick={() => handleRemoveImage(img, i)}
                     aria-label="Remover imagem"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -168,7 +297,7 @@ export default function EditItemPage() {
                 </div>
               ))}
 
-              {images.length < MAX_IMAGES && (
+              {visibleImages.length < MAX_IMAGES && (
                 <label className="edit-item-add-img-btn" aria-label="Adicionar imagem">
                   <input
                     type="file"
@@ -185,13 +314,9 @@ export default function EditItemPage() {
                 </label>
               )}
             </div>
-            {/* 🆕 NOVO — erro de limite + botão salvar imagens */}
+
             {imageError && <p className="edit-item-error">{imageError}</p>}
-            <div className="edit-item-save-row">
-              <button className="edit-item-save-btn" onClick={handleSaveImages}>
-                salvar imagens
-              </button>
-            </div>
+
           </div>
 
           {/* Campos de edição */}
@@ -210,11 +335,7 @@ export default function EditItemPage() {
                 }}
               />
               {nameError && <p className="edit-item-error">{nameError}</p>}
-              <div className="edit-item-save-row">
-                <button className="edit-item-save-btn" onClick={handleSaveName}>
-                  {nameSaved ? "salvo!" : "salvar"}
-                </button>
-              </div>
+
             </div>
 
             {/* Campo Coleção */}
@@ -226,38 +347,43 @@ export default function EditItemPage() {
                   value={collectionId}
                   onChange={(e) => setCollectionId(Number(e.target.value))}
                 >
-                  {mockCollections.map((col) => (
+                  {collections.map((col) => (
                     <option key={col.id} value={col.id}>
                       {col.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="edit-item-save-row">
-                <button className="edit-item-save-btn" onClick={handleSaveCollection}>
-                  {collectionSaved ? "salvo!" : "salvar"}
-                </button>
-              </div>
             </div>
 
             {/* Campo Descrição */}
             <div className="edit-item-field">
               <label className="edit-item-label">Descrição</label>
+
               <textarea
                 className="edit-item-textarea"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <div className="edit-item-save-row">
-                <button className="edit-item-save-btn" onClick={handleSaveDescription}>
-                  {descriptionSaved ? "salvo!" : "salvar"}
-                </button>
-              </div>
             </div>
 
+            <div className="edit-item-save-row">
+              <button
+                className="edit-item-save-btn"
+                onClick={handleSaveAll}
+                disabled={saveLoading}
+              >
+
+                {saveLoading
+                  ? "Salvando..."
+                  : saveSuccess
+                    ? "Salvo!"
+                    : "Salvar alterações"}
+
+              </button>
+            </div>
             {/* Botão excluir — visível apenas para o dono do item */}
-            {/* TODO: mockIsOwner será substituído pela verificação real do token */}
-            {mockIsOwner && (
+            {isOwner && (
               <div className="edit-item-delete-row">
                 <button
                   className="edit-item-delete-btn"
