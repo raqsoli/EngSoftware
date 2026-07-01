@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { apiFetch } from "../../api";
+import { apiFetch, getLoggedUserId } from "../../api";
 import "./ColectionPage.css";
-
-
 
 export default function CollectionPage() {
   const { id } = useParams();
@@ -18,56 +16,37 @@ export default function CollectionPage() {
   useEffect(() => {
     const carregarColecao = async () => {
       try {
-        const [
-          collectionRes,
-          itemsRes,
-          favoriteRes
-
-        ] = await Promise.all([
+        const [collectionRes, itemsRes, favoriteRes] = await Promise.all([
           apiFetch(`/api/collections/${id}/`),
           apiFetch(`/api/items/?collection=${id}`),
-          apiFetch("/api/favorite-collections/")
+          apiFetch("/api/favorite-collections/"),
         ]);
 
         if (!collectionRes.ok) {
           setError("Coleção não encontrada.");
           return;
-
         }
-        const collectionData = await collectionRes.json();
 
+        const collectionData = await collectionRes.json();
         setCollection(collectionData);
 
         if (itemsRes.ok) {
           const data = await itemsRes.json();
-          setItems(
-            Array.isArray(data)
-              ? data
-              : data.results ?? []
-          );
+          setItems(Array.isArray(data) ? data : data.results ?? []);
         }
 
         if (favoriteRes.ok) {
           const favorites = await favoriteRes.json();
-          const list = Array.isArray(favorites)
-            ? favorites
-            : favorites.results ?? [];
-          const fav = list.find(
-            f => f.collection?.id === collectionData.id
-          );
-
+          const list = Array.isArray(favorites) ? favorites : favorites.results ?? [];
+          const fav = list.find((f) => f.collection?.id === collectionData.id);
           if (fav) {
             setFavorited(true);
             setFavoriteRecordId(fav.id);
           }
         }
-      }
-
-      catch {
+      } catch {
         setError("Erro ao carregar coleção.");
-      }
-
-      finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -79,102 +58,48 @@ export default function CollectionPage() {
     if (favorited) {
       setFavorited(false);
       try {
-        await apiFetch(
-          `/api/favorite-collections/${favoriteRecordId}/`,
-          {
-            method: "DELETE"
-          }
-        );
+        await apiFetch(`/api/favorite-collections/${favoriteRecordId}/`, { method: "DELETE" });
         setFavoriteRecordId(null);
-      }
-      catch {
+      } catch {
         setFavorited(true);
       }
-    }
-
-    else {
+    } else {
       setFavorited(true);
       try {
-        const res = await apiFetch(
-          "/api/favorite-collections/",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              collection_id: collection.id
-            })
-          }
-        );
-
+        const res = await apiFetch("/api/favorite-collections/", {
+          method: "POST",
+          body: JSON.stringify({ collection_id: collection.id }),
+        });
         if (res.ok) {
           const data = await res.json();
           setFavoriteRecordId(data.id);
-        }
-        else {
+        } else {
           setFavorited(false);
         }
-      }
-      catch {
+      } catch {
         setFavorited(false);
       }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="collection-page">
-        <p style={{
-          textAlign: "center",
-          padding: 40
-        }}>
-          Carregando...
-        </p>
-      </div>
-    );
-  }
-
-  if (error || !collection) {
-    return (
-      <div className="collection-page">
-        <p style={{
-          textAlign: "center",
-          color: "#e91e8c",
-          padding: 40
-        }}>
-          {error}
-        </p>
-      </div>
-    );
-  }
+  if (loading) return <div className="collection-page"><p style={{ textAlign: "center", padding: 40 }}>Carregando...</p></div>;
+  if (error || !collection) return <div className="collection-page"><p style={{ textAlign: "center", color: "#e91e8c", padding: 40 }}>{error}</p></div>;
 
   return (
     <div className="collection-page">
-
-      {/* Cabeçalho: seta de voltar + título "Visualizar Coleção" lado a lado */}
       <header className="collection-page-header">
-        <button
-          className="back-btn"
-          onClick={() => navigate(-1)}
-          aria-label="Voltar"
-        >
+        <button className="back-btn" onClick={() => navigate(-1)} aria-label="Voltar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
       </header>
 
-      {/* Conteúdo principal com scroll */}
       <main className="collection-page-main">
-
-        {/* Nome da coleção, favorito e dono */}
         <div className="collection-top-info">
           <div className="collection-title-row">
             <h2 className="collection-name">{collection.name}</h2>
-
-            <button
-              className="collection-heart-btn"
-              onClick={handleToggleFavorite}
-              aria-label={favorited ? "Desfavoritar" : "Favoritar"}
-            >
+            <button className="collection-heart-btn" onClick={handleToggleFavorite} aria-label={favorited ? "Desfavoritar" : "Favoritar"}>
               {favorited ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#e91e8c">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -187,12 +112,20 @@ export default function CollectionPage() {
             </button>
           </div>
 
-          <div 
+          {/* Dono da coleção — clicável, navega para o perfil */}
+          <div
             className="collection-owner"
-            style={{ cursor: "default" }}
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+            const loggedId = getLoggedUserId();
+            if (collection.owner_id === loggedId) {
+              navigate(`/perfil/${loggedId}`);
+            } else {
+              navigate(`/perfil-usuario/${collection.owner_id}`);
+            }
+          }}
           >
             <span className="collection-owner-name">{collection.owner}</span>
-
             <div
               className="collection-owner-avatar"
               style={{
@@ -212,41 +145,16 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        {/* Grid de itens da coleção */}
         <div className="collection-grid">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="collection-item-card"
-              // Ao clicar no item, navega para a página do item já implementada
-              onClick={() => navigate(`/item/${item.id}`)}
-            >
+            <div key={item.id} className="collection-item-card" onClick={() => navigate(`/item/${item.id}`)}>
               <div className="collection-item-image-wrapper">
                 {item.images?.length > 0 ? (
-
-                  <img
-                    className="collection-item-image"
-                    src={item.images?.[0]?.image}
-                    alt={item.name}
-                  />
-
+                  <img className="collection-item-image" src={item.images[0].image} alt={item.name} />
                 ) : (
-
-                  <div
-                    className="collection-item-image"
-                    style={{
-                      background: "#fce4ec",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#c2185b"
-                    }}
-                  >
-
+                  <div className="collection-item-image" style={{ background: "#fce4ec", display: "flex", alignItems: "center", justifyContent: "center", color: "#c2185b" }}>
                     Sem imagem
-
                   </div>
-
                 )}
               </div>
               <p className="collection-item-name">{item.name}</p>
@@ -254,14 +162,12 @@ export default function CollectionPage() {
           ))}
         </div>
 
-        {/* Descrição da coleção */}
         <div className="collection-description">
           <p className="collection-description-label">Descrição</p>
           <div className="collection-description-box">
             {collection.description || ""}
           </div>
         </div>
-
       </main>
     </div>
   );
