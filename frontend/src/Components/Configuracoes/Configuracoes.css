@@ -43,3 +43,19 @@
   border-bottom: none;
   margin-top: 8px;
 }
+
+.settings-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #222;
+}
+
+.settings-back-btn:hover {
+  color: #e91e63;
+}
