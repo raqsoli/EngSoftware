@@ -22,6 +22,11 @@ class ItemSerializer(serializers.ModelSerializer):
         source="owner.username"
     )
 
+    owner_id = serializers.IntegerField(
+        source="owner.id",
+        read_only=True
+    )
+
     collection_name = serializers.ReadOnlyField(
         source="collection.name"
     )
@@ -37,6 +42,7 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "owner",
+            "owner_id",
             "collection",
             "collection_name",
             "name",
