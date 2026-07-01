@@ -1,67 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "./BuscaItemColecao.css";
-
-// ============================================================
-// DADOS MOCKADOS — substituir quando o back estiver pronto
-//
-// TODO: remover mockResults e substituir por chamada à API:
-//
-// const [items, setItems] = useState([])
-// const [collections, setCollections] = useState([])
-//
-// useEffect(() => {
-//   if (!query) return;
-//   setLoading(true);
-//   fetch(`url-da-api/busca/?q=${encodeURIComponent(query)}`)
-//     .then(res => res.json())
-//     .then(data => {
-//       setItems(data.items);           // lista de itens que batem com o termo
-//       setCollections(data.collections); // lista de coleções que batem com o termo
-//       setLoading(false);
-//     })
-//     .catch(() => setLoading(false));
-// }, [query]);
-//
-// O back vai retornar um objeto com duas listas:
-// {
-//   items: [{ id, name, collection, image }],
-//   collections: [{ id, name, owner, hearts, images }]
-// }
-//
-// Se nenhum registro for encontrado, o back retorna listas vazias:
-// { items: [], collections: [] }
-// → o front detecta isso via hasResults = false e exibe a mensagem amigável
-// ============================================================
-
-// Dados mockados usados enquanto o back não está pronto.
-// Representam o formato exato que a API vai retornar.
-const mockResults = {
-    items: [
-    { id: 1, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+1" },
-    { id: 2, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+2" },
-    { id: 3, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+3" },
-    { id: 4, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+4" },
-    { id: 5, name: "Hello Kitty - McDonalds 2025", collection: "McDonalds", image: "https://placehold.co/200x200/fce4ec/c2185b?text=HK+5" },
-],
-    collections: [
-    {
-    id: 1,
-    name: "McDonalds Maio 2025 (HK)",
-    owner: "Nome do Dono Coleção",
-    hearts: 2000,
-    images: [
-        "https://placehold.co/120x120/fce4ec/c2185b?text=HK+A",
-        "https://placehold.co/120x120/f8bbd0/ad1457?text=HK+B",
-        "https://placehold.co/120x120/f48fb1/880e4f?text=HK+C",
-        "https://placehold.co/120x120/f06292/c2185b?text=HK+D",
-    ],
-    },
-    { id: 2, name: "Coleção 2", owner: "Dono 2", hearts: 340, images: [] },
-    { id: 3, name: "Coleção 3", owner: "Dono 3", hearts: 120, images: [] },
-    { id: 4, name: "Coleção 4", owner: "Dono 4", hearts: 88, images: [] },
-    ],
-};
+import { apiFetch } from "../../api";
 
 // Mesma função usada na HomePage e UserProfilePage
 // Converte números >= 1000 para formato curto: 2000 → "2k"
@@ -105,14 +45,20 @@ function ItemCard({ item }) {
     >
         {/* Imagem do item — item.image será a URL real vinda do banco */}
         <div className="sr-item-image">
-            <img src={item.image} alt={item.name} />
+            <img src={
+                item.images.length > 0
+                    ? item.images[0].image
+                    : "https://placehold.co/200x200?text=Sem+Imagem"
+            }
+            alt={item.name}
+            />
         </div>
 
         <div className="sr-item-info">
             <div>
                 {/* item.name e item.collection virão do banco com os valores reais */}
                 <p className="sr-item-name">{item.name}</p>
-                <p className="sr-item-collection">Coleção: {item.collection}</p>
+                <p className="sr-item-collection">Coleção: {item.collection_name}</p>
             </div>
 
         {/* Botão de favoritar — stopPropagation evita navegar ao clicar no coração */}
@@ -184,7 +130,7 @@ function CollectionCard({ collection }) {
             </button>
 
             {/* collection.hearts virá do back como número inteiro — formatHearts exibe "2k" etc. */}
-            <span className="sr-hearts-count">{formatHearts(collection.hearts)}</span>
+            <span className="sr-hearts-count">{formatHearts(collection.hearts_count)}</span>
             </div>
         </div>
     </div>
@@ -236,38 +182,56 @@ export default function BuscaItemColecao() {
     //   então não será necessário fazer o .filter() no front — só setar o retorno da API
     // ============================================================
     useEffect(() => {
-        // Se o campo estiver vazio, limpa os resultados e não faz nada
+
         if (!query.trim()) {
             setItems([]);
             setCollections([]);
             return;
-    }
-
-    setLoading(true);
-
-    // Simulação de delay de rede (300ms) — imita o tempo de resposta da API
-    // TODO: remover este setTimeout e substituir pelo fetch real quando o back estiver pronto
-    const timer = setTimeout(() => {
-        const term = query.toLowerCase();
-
-        // Filtra os mocks simulando a busca parcial e insensível a maiúsculas que o back fará
-        // Com o back: esse filtro some — os dados já chegam filtrados da API
-        const filteredItems = mockResults.items.filter(
-            (i) => i.name.toLowerCase().includes(term) || i.collection.toLowerCase().includes(term)
-            );
-        const filteredCollections = mockResults.collections.filter(
-            (c) => c.name.toLowerCase().includes(term)
-            );
-
-        setItems(filteredItems);
-        setCollections(filteredCollections);
-        setLoading(false);
-    }, 300);
-
-    // Cleanup: cancela o timer se o usuário digitar antes dos 300ms acabarem
-    // Isso evita chamadas desnecessárias à API enquanto o usuário ainda está digitando
-    return () => clearTimeout(timer);
-}, [query]); // ← roda de novo sempre que a URL ?q= mudar
+        }
+    
+        async function buscar() {
+    
+            setLoading(true);
+    
+            try {
+    
+                const [itemsResponse, collectionsResponse] =
+                    await Promise.all([
+    
+                        apiFetch(
+                            `/api/items/?search=${encodeURIComponent(query)}`
+                        ),
+    
+                        apiFetch(
+                            `/api/collections/?search=${encodeURIComponent(query)}`
+                        )
+    
+                    ]);
+    
+                const itemsData = await itemsResponse.json();
+                const collectionsData = await collectionsResponse.json();
+    
+                setItems(itemsData);
+                setCollections(collectionsData);
+    
+            } catch (error) {
+    
+                console.error("Erro ao buscar:", error);
+    
+                setItems([]);
+                setCollections([]);
+    
+            } finally {
+    
+                setLoading(false);
+    
+            }
+    
+        }
+    
+        buscar();
+    
+    }, [query]);
 
     // Dispara a busca: atualiza o ?q= na URL → useEffect reage automaticamente
     // Não faz fetch direto — quem faz fetch é sempre o useEffect, reagindo à URL
