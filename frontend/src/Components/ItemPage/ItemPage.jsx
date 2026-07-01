@@ -17,13 +17,16 @@ export default function ItemPage() {
   const [favorited, setFavorited] = useState(false);
   const [favoriteRecordId, setFavoriteRecordId] = useState(null); 
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
     const carregarItem = async () => {
       try {
-        const [itemRes, favItemsRes, imagesRes] = await Promise.all([
+        const [itemRes, favItemsRes, imagesRes, profileRes] = await Promise.all([
           apiFetch(`/api/items/${id}/`),
           apiFetch("/api/favorite-items/"),
           apiFetch(`/api/items/${id}/images/`),
+          apiFetch("/api/profile/"),
         ]);
 
         if (!itemRes.ok) {
@@ -51,6 +54,12 @@ export default function ItemPage() {
             setFavoriteRecordId(favRecord.id);
           }
         }
+
+        // usuário logado (se não estiver logado, /api/profile/ deve retornar 401/403)
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setCurrentUser(profileData);
+        }
       } catch (err) {
         setError("Não foi possível carregar o item.");
       } finally {
@@ -60,6 +69,9 @@ export default function ItemPage() {
 
     carregarItem();
   }, [id]);
+
+  // só é dono se estiver logado e o username bater com o owner do item
+  const isOwner = !!currentUser && currentUser.username === item?.owner;
 
 
   const handleToggleFavorite = async () => {
@@ -153,6 +165,19 @@ export default function ItemPage() {
 
               Coleção: {collectionId}
             </p>
+            {isOwner && (
+              <button
+                className="item-edit-icon-btn"
+                onClick={() => navigate(`/editar-item/${item.id}`)}
+                aria-label="Editar item"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span className="item-edit-icon-label">Editar item</span>
+              </button>
+            )}
           </div>
 
           <div className="item-owner">

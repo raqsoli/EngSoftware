@@ -45,6 +45,17 @@ class ItemSerializer(serializers.ModelSerializer):
             "created_at"
         ]
 
+    def validate_collection(self, value):
+
+        request = self.context.get("request")
+
+        if request and value.owner != request.user:
+            raise serializers.ValidationError(
+                "Você só pode mover o item para uma coleção sua."
+            )
+
+        return value
+
     def create(self, validated_data):
 
         item = Item.objects.create(
