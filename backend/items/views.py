@@ -51,12 +51,16 @@ class ItemViewSet(viewsets.ModelViewSet):
 
         owner = self.request.query_params.get("owner")
         collection = self.request.query_params.get("collection")
+        search = self.request.query_params.get("search")
 
         if owner:
             queryset = queryset.filter(owner_id=owner)
 
         if collection:
             queryset = queryset.filter(collection_id=collection)
+
+        if search:
+            queryset = queryset.filter(name__icontains=search)
 
         return queryset
 
