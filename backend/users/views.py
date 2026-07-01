@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from .serializers import (
     RegisterSerializer,
     ProfileSerializer,
+    PublicProfileSerializer,
     ChangePasswordSerializer,
     DeleteAccountSerializer
 )
@@ -27,7 +28,25 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
-    
+
+
+class PublicUserDetailView(generics.RetrieveAPIView):
+    """
+    Endpoint público de leitura para exibir o perfil de
+    QUALQUER usuário (usado ao clicar no dono de um item/coleção).
+    Usa PublicProfileSerializer, que nunca expõe e-mail nem
+    outros dados sensíveis.
+    """
+
+    queryset = User.objects.all()
+
+    serializer_class = PublicProfileSerializer
+
+    permission_classes = [
+        IsAuthenticatedOrReadOnly
+    ]
+
+
 class ChangePasswordView(APIView):
 
     permission_classes = [

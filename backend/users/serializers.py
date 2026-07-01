@@ -88,6 +88,54 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer para dados PÚBLICOS de qualquer usuário
+    (usado em /api/users/<id>/). Nunca deve incluir e-mail
+    ou qualquer outro dado sensível — só o que pode aparecer
+    na página de perfil de outra pessoa.
+    """
+
+    avatar = serializers.SerializerMethodField()
+
+    totalItems = serializers.SerializerMethodField()
+
+    totalCollections = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "avatar",
+            "totalItems",
+            "totalCollections"
+        ]
+
+    def get_avatar(self, obj):
+
+        request = self.context.get("request")
+
+        profile = getattr(obj, "profile", None)
+
+        if not profile or not profile.image:
+            return None
+
+        if request:
+            return request.build_absolute_uri(profile.image.url)
+
+        return profile.image.url
+
+    def get_totalItems(self, obj):
+        # Item.owner tem related_name='items' explícito
+        return obj.items.count()
+
+    def get_totalCollections(self, obj):
+        # Collection.owner tem related_name='collections' explícito
+        return obj.collections.count()
+
+
 class ChangePasswordSerializer(serializers.Serializer):
 
     old_password = serializers.CharField()

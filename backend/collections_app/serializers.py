@@ -10,6 +10,11 @@ class CollectionSerializer(serializers.ModelSerializer):
         source="owner.username"
     )
 
+    owner_id = serializers.IntegerField(
+        source="owner.id",
+        read_only=True
+    )
+
     hearts_count = serializers.SerializerMethodField()
 
     images = serializers.SerializerMethodField()
