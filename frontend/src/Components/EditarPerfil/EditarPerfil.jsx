@@ -1,36 +1,34 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../../api";
+import { apiFetch, limparTokens } from "../../api";
 import "./EditarPerfil.css";
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
 
-  // antes vinha de mockUser fixo. Agora começa vazio
-  // e é preenchido pelo GET /api/profile/ no useEffect abaixo
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletePasswordError, setDeletePasswordError] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // controla o carregamento inicial da tela (enquanto busca o perfil)
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadError, setLoadError] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  // avatarPreview começa null até o GET carregar a imagem real
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarError, setAvatarError] = useState("");
 
-  // antes eram 3 estados de "saved" separados (nameSaved, emailSaved, ...)
-  // Agora é um único profileSaved, já que nome+email+avatar salvam juntos
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
 
-  // erros de nome/email agora vêm do back, não só de validação local
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [profileServerError, setProfileServerError] = useState("");
@@ -211,7 +209,38 @@ export default function EditProfilePage() {
     }
   };
 
-  // exibe um estado de carregamento simples enquanto busca o perfil
+  const handleDeleteAccount = async () => {
+    setDeletePasswordError("");
+
+    if (deletePassword.length < 6) {
+      setDeletePasswordError("Digite sua senha atual.");
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    try {
+      const response = await apiFetch("/api/delete-account/", {
+        method: "DELETE",
+        body: JSON.stringify({ password: deletePassword }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setDeletePasswordError(data.error ?? "Senha incorreta.");
+        setDeleteLoading(false);
+        return;
+      }
+
+      limparTokens();
+      navigate("/");
+    } catch (err) {
+      setDeletePasswordError("Não foi possível conectar ao servidor.");
+      setDeleteLoading(false);
+    }
+  };
+
+
   if (loadingProfile) {
     return (
       <div className="edit-profile-page">
@@ -358,13 +387,57 @@ export default function EditProfilePage() {
         <div className="edit-profile-delete-row">
           <button
             className="edit-profile-delete-btn"
-            onClick={() => navigate("/excluir-conta")}
+            onClick={() => setShowDeleteModal(true)}
           >
             excluir conta
           </button>
         </div>
 
       </main>
+
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <p className="delete-modal-text">
+              Para excluir sua conta, confirme sua senha. Essa ação não pode ser desfeita.
+            </p>
+            <input
+              className={`edit-profile-input ${deletePasswordError ? "input-error" : ""}`}
+              type="password"
+              placeholder="Sua senha atual"
+              value={deletePassword}
+              onChange={(e) => {
+                setDeletePassword(e.target.value);
+                setDeletePasswordError("");
+              }}
+            />
+            {deletePasswordError && (
+              <p className="edit-profile-error">{deletePasswordError}</p>
+            )}
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-cancel"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword("");
+                  setDeletePasswordError("");
+                }}
+                disabled={deleteLoading}
+              >
+                cancelar
+              </button>
+              <button
+                className="delete-modal-confirm"
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "excluindo..." : "excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
