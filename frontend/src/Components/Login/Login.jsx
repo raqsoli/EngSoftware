@@ -1,42 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, salvarTokens } from "../../api";
+import { apiFetch, salvarTokens, salvarUserId } from "../../api";
 import "./Login.css";
 
 const Login = () => {
-
-  // antes "username" guardava um email (o nome da variável já avisava
-  // que ia mudar). Mantive o nome da variável pra não quebrar o resto do componente,
-  // mas agora ela representa de fato o username que o back espera.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // renomeado de emailError pra usernameError, já que não é mais email
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
-  // erro genérico vindo da API (ex: "usuário ou senha incorretos")
   const [serverError, setServerError] = useState("");
-
-  // true enquanto espera a resposta do back, pra desabilitar o botão
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  //REMOVIDO — validateEmail não existe mais, porque o campo não é email.
-  // O back já valida o username; o front só confirma que não está vazio.
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // reseta os erros antes de validar
     setUsernameError("");
     setPasswordError("");
     setServerError("");
 
     let hasError = false;
 
-    // antes validava formato de email, agora só checa se não está vazio
     if (username.trim() === "") {
       setUsernameError("Digite seu nome de usuário.");
       hasError = true;
@@ -49,31 +34,36 @@ const Login = () => {
 
     if (hasError) return;
 
-    // bloco inteiro: chamada real ao back, antes era só TODO + navigate direto
     setLoading(true);
 
     try {
       const response = await apiFetch("/api/token/", {
         method: "POST",
-        skipAuth: true, // nunca enviar token (mesmo expirado) numa rota pública de login
+        skipAuth: true,
         body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
-        // trata erro retornado pela API (login/senha incorretos)
         setServerError("Usuário ou senha incorretos.");
         setLoading(false);
         return;
       }
 
       const data = await response.json();
-      // salva access e refresh no localStorage via helper do api.js
       salvarTokens(data);
+
+      // Busca o perfil do usuário recém-logado para salvar o ID dele
+      // Isso é necessário para saber, em outras telas, se o dono de um
+      // item/coleção é o próprio usuário logado ou outra pessoa
+      const profileRes = await apiFetch("/api/profile/");
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        salvarUserId(profile.id);
+      }
 
       setLoading(false);
       navigate("/home");
     } catch (err) {
-      //  erro de rede (back fora do ar, sem conexão, etc.)
       setServerError("Não foi possível conectar ao servidor. Tente novamente.");
       setLoading(false);
     }
@@ -86,11 +76,10 @@ const Login = () => {
           <h1>Acesse o Sistema</h1>
 
           <div className="input-field">
-            {/*label e id trocados de "email" para "username" */}
             <label htmlFor="username">Usuário</label>
             <input
               id="username"
-              type="text" //antes era type="email"
+              type="text"
               placeholder='Seu nome de usuário'
               required
               className={usernameError ? "input-error" : ""}
@@ -119,14 +108,13 @@ const Login = () => {
             {passwordError && <span className="error-message">{passwordError}</span>}
           </div>
 
-          {/* exibe erro vindo do back (usuário/senha incorretos, erro de rede) */}
           {serverError && <span className="error-message">{serverError}</span>}
 
           <button type="submit" disabled={loading}>
             {loading ? "entrando..." : "Entrar"}
           </button>
-
         </form>
+
         <div className="login-cadastro-link">
           <span>Não tem uma conta? </span>
           <button
@@ -139,7 +127,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
