@@ -8,7 +8,7 @@ const MAX_IMAGES = 3;
 export default function AdicionarItem() {
   const navigate = useNavigate();
 
-  // antes era mockCollections fixo. Agora vem do back via GET /api/collections/
+  // antes era mockCollections fixo. Agora vem do back via GET /api/collections/?owner=<id>
   const [collections, setCollections] = useState([]);
   const [loadingCollections, setLoadingCollections] = useState(true);
   const [loadCollectionsError, setLoadCollectionsError] = useState("");
@@ -26,11 +26,21 @@ export default function AdicionarItem() {
   const [imageError, setImageError] = useState("");
   const [serverError, setServerError] = useState(""); // erro genérico do back
 
-  //  bloco inteiro: busca as coleções reais do usuário ao abrir a tela
+  // busca o usuário logado e, com o id dele, busca só as coleções dele
   useEffect(() => {
     const carregarColecoes = async () => {
       try {
-        const response = await apiFetch("/api/collections/");
+        const profileRes = await apiFetch("/api/profile/");
+
+        if (!profileRes.ok) {
+          setLoadCollectionsError("Não foi possível identificar o usuário logado.");
+          setLoadingCollections(false);
+          return;
+        }
+
+        const profile = await profileRes.json();
+
+        const response = await apiFetch(`/api/collections/?owner=${profile.id}`);
 
         if (!response.ok) {
           setLoadCollectionsError("Não foi possível carregar suas coleções.");
@@ -79,7 +89,28 @@ export default function AdicionarItem() {
 
   const canSave = name.trim() !== "" && collectionId !== "";
 
-  // bloco inteiro: agora chama POST /api/items/ de verdade
+  // envia as imagens selecionadas para o item recém-criado
+  const enviarImagens = async (itemId) => {
+    for (const img of images) {
+      const formData = new FormData();
+      formData.append("image", img.file);
+
+      try {
+        const res = await apiFetch(`/api/items/${itemId}/images/`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          console.error("Erro ao enviar imagem", img.file?.name);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  // cria o item (sem imagens) e, em seguida, envia as imagens separadamente
   const handleSave = async () => {
     setNameError("");
     setCollectionError("");
@@ -99,17 +130,14 @@ export default function AdicionarItem() {
 
     setSaving(true);
 
-    const formData = new FormData();
-    formData.append("name", name.trim());
-    formData.append("description", description.trim());
-    formData.append("collection", Number(collectionId));
-    //antes era "images", a doc confirma que o campo certo é "uploaded_images"
-    images.forEach((img) => formData.append("uploaded_images", img.file));
-
     try {
       const response = await apiFetch("/api/items/", {
         method: "POST",
-        body: formData,
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+          collection: Number(collectionId),
+        }),
       });
 
       if (!response.ok) {
@@ -128,6 +156,11 @@ export default function AdicionarItem() {
       }
 
       const newItem = await response.json();
+
+      // item criado com sucesso — agora envia as imagens (se houver)
+      if (images.length > 0) {
+        await enviarImagens(newItem.id);
+      }
 
       setSaving(false);
       setSaved(true);
@@ -234,7 +267,7 @@ export default function AdicionarItem() {
                   onChange={(e) => { setCollectionId(e.target.value); setCollectionError(""); }}
                 >
                   <option value="">Selecione uma coleção</option>
-                  {/*antes era mockCollections, agora é collections (do back) */}
+                  {/*antes era mockCollections, agora é collections (filtradas pelo owner) */}
                   {collections.map((col) => (
                     <option key={col.id} value={col.id}>{col.name}</option>
                   ))}
