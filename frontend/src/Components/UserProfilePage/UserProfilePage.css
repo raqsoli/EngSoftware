@@ -307,7 +307,7 @@
 /* ── Grid de itens do perfil ── */
 .profile-items-grid {
   display: grid;
-  grid-template-columns: repeat(3, 160px);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
 }
 

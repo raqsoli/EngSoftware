@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch, limparTokens } from "../../api"; // ajuste o caminho conforme a pasta real
 import "./ExcluirConta.css";
 
 export default function ExcluirContaPage() {
@@ -10,7 +11,7 @@ export default function ExcluirContaPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setPasswordError("");
 
     if (password.trim() === "") {
@@ -20,37 +21,34 @@ export default function ExcluirContaPage() {
 
     setLoading(true);
 
-    // TODO: quando o back estiver pronto, substituir por chamada à API:
-    // fetch('url-da-api/usuario/excluir-conta', {
-    //   method: 'DELETE',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ password })
-    // })
-    // .then(res => {
-    //   if (res.status === 401) {
-    //     setLoading(false);
-    //     setPasswordError("Senha incorreta.");
-    //     return;
-    //   }
-    //   if (res.ok) {
-    //     // Limpa credenciais salvas localmente
-    //     localStorage.clear();
-    //     sessionStorage.clear();
-    //     setLoading(false);
-    //     setSuccess(true);
-    //     setTimeout(() => navigate("/"), 2000);
-    //   }
-    // })
+    try {
+      const response = await apiFetch("/api/delete-account/", {
+        method: "DELETE",
+        body: JSON.stringify({ password }),
+      });
 
-    // Por enquanto, simula o retorno de sucesso do back
-    setTimeout(() => {
-      // Limpa credenciais salvas localmente
-      localStorage.clear();
-      sessionStorage.clear();
+      if (response.status === 400) {
+        setLoading(false);
+        setPasswordError("Senha incorreta.");
+        return;
+      }
+
+      if (!response.ok) {
+        setLoading(false);
+        setPasswordError("Não foi possível excluir a conta. Tente novamente.");
+        return;
+      }
+
+      // Sucesso: limpa tokens e user_id salvos localmente
+      limparTokens();
+
       setLoading(false);
       setSuccess(true);
       setTimeout(() => navigate("/"), 2000);
-    }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setPasswordError("Erro de conexão. Tente novamente.");
+    }
   };
 
   return (
@@ -72,7 +70,6 @@ export default function ExcluirContaPage() {
       <main className="delete-account-main">
         <div className="delete-account-card">
 
-          {/* Ícone de aviso */}
           <div className="delete-account-icon">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -124,7 +121,6 @@ export default function ExcluirContaPage() {
         </div>
       </main>
 
-      {/* Toast de sucesso */}
       {success && (
         <div className="delete-account-toast">
           Conta excluída com sucesso. Redirecionando...
