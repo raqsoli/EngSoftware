@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";  
 import { useNavigate, useParams } from "react-router-dom";
-import { apiFetch } from "../../api"; 
+import { apiFetch, API_BASE_URL } from "../../api"; 
 import "./ItemPage.css";
 
 export default function ItemPage() {
@@ -20,9 +20,10 @@ export default function ItemPage() {
   useEffect(() => {
     const carregarItem = async () => {
       try {
-        const [itemRes, favItemsRes] = await Promise.all([
+        const [itemRes, favItemsRes, imagesRes] = await Promise.all([
           apiFetch(`/api/items/${id}/`),
           apiFetch("/api/favorite-items/"),
+          apiFetch(`/api/items/${id}/images/`),
         ]);
 
         if (!itemRes.ok) {
@@ -32,7 +33,14 @@ export default function ItemPage() {
         }
 
         const itemData = await itemRes.json();
-        setItem(itemData);
+
+        // imagens agora vêm de um endpoint separado, não dentro do item
+        let images = [];
+        if (imagesRes.ok) {
+          images = await imagesRes.json();
+        }
+
+        setItem({ ...itemData, images });
 
         if (favItemsRes.ok) {
           const favData = await favItemsRes.json();
@@ -174,7 +182,11 @@ export default function ItemPage() {
           {images.length > 0 ? (
             <img
               className="item-gallery-image"
-              src={images[currentImage].image}
+              src={
+                images[currentImage].image.startsWith("http")
+                  ? images[currentImage].image
+                  : `${API_BASE_URL}${images[currentImage].image}`
+              }
               alt={item.name}
             />
           ) : (
