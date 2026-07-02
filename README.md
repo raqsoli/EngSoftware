@@ -215,7 +215,8 @@ Base URL: `http://127.0.0.1:8000/api/`
 ## Padrão de Projeto (Design Patterns)
 
 Facade (Padrão Estrutural)
-Arquivo: src/components/AdicionarColecao/colecaoFacade.js
+Arquivo: src/components/AdicionarColecao/colecaoFacade.js.
+
 Onde é aplicado: Na tela de Adicionar Coleção (adicionarcolecao.jsx).
 
 Como funciona no projeto:
