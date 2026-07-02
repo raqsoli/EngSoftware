@@ -27,6 +27,8 @@ class ItemSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    owner_avatar = serializers.SerializerMethodField()
+
     collection_name = serializers.ReadOnlyField(
         source="collection.name"
     )
@@ -43,6 +45,7 @@ class ItemSerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "owner_id",
+            "owner_avatar",
             "collection",
             "collection_name",
             "name",
@@ -50,6 +53,20 @@ class ItemSerializer(serializers.ModelSerializer):
             "images",
             "created_at"
         ]
+
+    def get_owner_avatar(self, obj):
+
+        request = self.context.get("request")
+
+        profile = getattr(obj.owner, "profile", None)
+
+        if not profile or not profile.image:
+            return None
+
+        if request:
+            return request.build_absolute_uri(profile.image.url)
+
+        return profile.image.url
 
     def validate_collection(self, value):
 

@@ -152,22 +152,31 @@ export default function CollectionPage() {
           }}
           >
             <span className="collection-owner-name">{collection.owner}</span>
-            <div
-              className="collection-owner-avatar"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: "#fce4ec",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#c2185b",
-                fontWeight: 600,
-              }}
-            >
-              {collection.owner?.[0]?.toUpperCase() ?? "?"}
-            </div>
+            {collection.owner_avatar ? (
+              <img
+                className="collection-owner-avatar"
+                src={collection.owner_avatar}
+                alt={collection.owner}
+                style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                className="collection-owner-avatar"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  background: "#fce4ec",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#c2185b",
+                  fontWeight: 600,
+                }}
+              >
+                {collection.owner?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
           </div>
         </div>
 

@@ -102,7 +102,6 @@
 .arrow-btn {
   position: absolute;
   top: 50%;
-  right: 0;
   transform: translateY(-50%);
   background: #fff;
   border: 1px solid #e0e0e0;
@@ -116,6 +115,14 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   z-index: 2;
   color: #555;
+}
+
+.arrow-btn-right {
+  right: 0;
+}
+
+.arrow-btn-left {
+  left: 0;
 }
 
 /* ── Card de item ── */
