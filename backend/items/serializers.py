@@ -15,7 +15,7 @@ class ItemImageSerializer(serializers.ModelSerializer):
             "image"
         ]
 
-
+# expões campos via source
 class ItemSerializer(serializers.ModelSerializer):
 
     owner = serializers.ReadOnlyField(

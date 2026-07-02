@@ -27,7 +27,7 @@ from .serializers import (
 
 from users.permissions import IsOwnerOrReadOnly
 
-
+# ModelViewSet já implementa GET, POST, PUT/PATCH e DESTROY
 class ItemViewSet(viewsets.ModelViewSet):
 
     queryset = Item.objects.all()
@@ -35,8 +35,8 @@ class ItemViewSet(viewsets.ModelViewSet):
     serializer_class = ItemSerializer
 
     permission_classes = [
-        IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly
+        IsAuthenticatedOrReadOnly, # Sem estar logado só pode ler
+        IsOwnerOrReadOnly # mesmo autenticado, só pode escrever se for o dono
     ]
 
     parser_classes = [
@@ -45,6 +45,7 @@ class ItemViewSet(viewsets.ModelViewSet):
         FormParser
     ]
 
+    # Buscas, implementa filtros manuais via query string
     def get_queryset(self):
 
         queryset = Item.objects.all()

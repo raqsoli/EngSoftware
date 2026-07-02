@@ -44,6 +44,7 @@ class CollectionSerializer(serializers.ModelSerializer):
             collection=obj
         ).count()
 
+    # Pra mostrar as imagens dos itens da coleção
     def get_images(self, obj):
 
         request = self.context.get("request")

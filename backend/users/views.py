@@ -13,12 +13,13 @@ from .serializers import (
     DeleteAccountSerializer
 )
 
-
+# Implementa o POST sozinha
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+    serializer_class = RegisterSerializer # valida os dados (201 = created, 400 bad request)
 
 
+# permite get (ver) e put/patch (editar)
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
 

@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from collections_app.models import Collection
 
-
+# cada item pertence obrigatoriamente a um dono e a uma coleção
 class Item(models.Model):
 
     name = models.CharField(
@@ -32,7 +32,7 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
-
+# cada imagem pode ter várias imgs
 class ItemImage(models.Model):
 
     item = models.ForeignKey(

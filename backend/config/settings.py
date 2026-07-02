@@ -17,7 +17,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# Application definition
+# Application definition - lista tudo que o Django liga
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -28,8 +28,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     'rest_framework',
-    'corsheaders',
+    'corsheaders', # permite que o frontend converse com o backend (origens diferentes)
 
+    # Os 4 apps do projeto
     'users',
     'items',
     'collections_app',
@@ -120,8 +121,10 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# All_origins = True (libera qualquer origem acessar a api, numa aplicação real isso seria restrito ao domínio do frontend)
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Toda seção tenta se autenticar de duas formas: sessão do django ou token JWT
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
@@ -129,6 +132,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+# Define quanto tempo cada token dura 
+# O JWT é stateless, o django n guarda sessões ativas, deslogar aqui é apagar o token (o token em si continua valido por 1h)
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -137,6 +142,7 @@ SIMPLE_JWT = {
 LOGIN_REDIRECT_URL = "/api/"
 LOGOUT_REDIRECT_URL = "/api/"
 
+# Define onde fica os arquivos enviados
 MEDIA_URL = "/media/"
 
 MEDIA_ROOT = BASE_DIR / "media"
