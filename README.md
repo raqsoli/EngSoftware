@@ -48,31 +48,41 @@ EngSoftware/
 │   └── requirements.txt
 │
 └── frontend/
-    ├── src/
-    │   ├── Components/         # Uma pasta por tela/feature, cada uma com .jsx + .css
-    │   │   ├── AdicionarColecao/
-    │   │   ├── AdicionarItem/
-    │   │   ├── BuscaItemColecao/
-    │   │   ├── CadastroUsuario/
-    │   │   ├── ColectionPage/
-    │   │   ├── Configuracoes/
-    │   │   ├── EditarColecao/
-    │   │   ├── EditarItem/
-    │   │   ├── EditarPerfil/
-    │   │   ├── Excluirconta/
-    │   │   ├── HomePage/
-    │   │   ├── ItemPage/
-    │   │   ├── Login/
-    │   │   ├── PerfilOutroUsuario/
-    │   │   └── UserProfilePage/
-    │   ├── api.js               # Configuração de fetch, tokens e API_BASE_URL
-    │   ├── App.jsx               # Definição das rotas (react-router-dom)
-    │   ├── App.css
-    │   ├── index.css
-    │   └── main.jsx
-    ├── index.html
+│   ├── src/
+│   │   ├── Components/         # Uma pasta por tela/feature, cada uma com .jsx + .css
+│   │   │   ├── AdicionarColecao/
+│   │   │   ├── AdicionarItem/
+│   │   │   ├── BuscaItemColecao/
+│   │   │   ├── CadastroUsuario/
+│   │   │   ├── ColectionPage/
+│   │   │   ├── Configuracoes/
+│   │   │   ├── EditarColecao/
+│   │   │   ├── EditarItem/
+│   │   │   ├── EditarPerfil/
+│   │   │   ├── Excluirconta/
+│   │   │   ├── HomePage/
+│   │   │   ├── ItemPage/
+│   │   │   ├── Login/
+│   │   │   ├── PerfilOutroUsuario/
+│   │   │   └── UserProfilePage/
+│   │   ├── api.js               # Configuração de fetch, tokens e API_BASE_URL
+│   │   ├── App.jsx               # Definição das rotas (react-router-dom)
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+│   
+└── E2E/
+    ├── tests
+    │   ├── CriarColecao.spec.js
+    │   ├── EditarItem.spec.js
+    │   ├── FavoritarColecao.spec.js
+    ├── utils
+    │   └── api.js
     ├── package.json
-    └── vite.config.js
+    └── playwright.config.js
 ```
 
 ---
@@ -126,6 +136,41 @@ npm run dev
 O frontend sobe por padrão em **`http://localhost:5173`** e já está configurado (em `src/api.js`, constante `API_BASE_URL`) para consumir a API em `http://127.0.0.1:8000`.
 
 > Importante: o backend precisa estar rodando **antes** (ou ao mesmo tempo) para o frontend conseguir buscar dados.
+
+---
+
+## Como rodar os testes E2E(Playwright)
+
+Pré-requisitos: **backend** (`http://127.0.0.1:8000`) e **frontend** (`http://localhost:5173`) rodando ao mesmo tempo, já que os testes usam a API de verdade para preparar dados (usuário, login, coleção) e o navegador para interagir com a tela.
+
+```bash
+cd E2E
+
+# Instalar dependências
+npm install
+
+# Instalar os navegadores usados pelo Playwright (só na primeira vez)
+npx playwright install
+ 
+# Rodar todos os testes
+npm test
+ 
+# Rodar com interface visual (útil para depurar)
+npm run test:ui
+ 
+# Ver o relatório da última execução
+npm run report
+```
+
+### O que cada teste cobre
+ 
+| Arquivo | Fluxo |
+|---|---|
+| `CriarColecao.spec.js` | Cadastro de usuário pela tela de cadastro e criação de uma coleção, conferindo se ela aparece no perfil. |
+| `FavoritarColecao.spec.js` | Favoritar uma coleção na Home, confirmar que o favorito persiste após recarregar a página, e que a coleção aparece em "Coleções favoritas" no perfil. |
+| `EditarItem.spec.js` | Criação de um item a partir do perfil, confirmando que ele aparece na aba "Itens", edição do nome do item, e confirmação de que o nome atualizado aparece no perfil. |
+ 
+Os testes que não precisam testar o cadastro/login pela interface preparam o usuário direto via API (`utils/api.js`, função `prepararUsuarioComColecao`) e só injetam os tokens no `localStorage` antes de abrir a página, assim o teste foca no fluxo que realmente importa, sem repetir o login na UI toda hora.
 
 ---
 
