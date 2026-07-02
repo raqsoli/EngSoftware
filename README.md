@@ -212,6 +212,23 @@ Base URL: `http://127.0.0.1:8000/api/`
 
 ---
 
+## Padrão de Projeto (Design Patterns)
+
+Facade (Padrão Estrutural)
+Arquivo: src/components/AdicionarColecao/colecaoFacade.js
+Onde é aplicado: Na tela de Adicionar Coleção (adicionarcolecao.jsx).
+
+Como funciona no projeto:
+O padrão Facade foi implementado para atuar como uma interface unificada e simplificada entre o componente visual do React e as regras de negócio complexas da aplicação. Em vez de a página de adicionar coleção gerenciar diretamente a validação local, a formatação dos dados (payload) e a requisição HTTP, ela apenas chama a função salvarColecao exposta pela fachada.
+
+Vantagens obtidas:
+
+Baixo Acoplamento: O componente de interface (front-end) não tem conhecimento de como os dados são salvos ou processados internamente.
+
+Manutenibilidade: Se a API, os endpoints ou as regras de validação mudarem no futuro, as alterações serão feitas exclusivamente no arquivo do Facade, mantendo o componente visual 100% intacto e sem impactos na interface do usuário.
+
+---
+
 ## Observações
 
 - Imagens enviadas (avatares, imagens de itens) ficam salvas em `backend/media/` e servidas pelo Django em desenvolvimento (`MEDIA_URL`/`MEDIA_ROOT` em `config/settings.py`).
