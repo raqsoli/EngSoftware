@@ -21,13 +21,19 @@ class FavoriteItemViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
-        return FavoriteItem.objects.filter(
-            user=self.request.user
-        ).select_related(
+        queryset = FavoriteItem.objects.select_related(
             "item",
             "item__collection"
         )
 
+        # Favoritos são públicos: permite consultar os de qualquer usuário
+        # via ?user=<id>. Sem esse parâmetro, retorna os do usuário logado.
+        user_id = self.request.query_params.get("user")
+
+        if user_id:
+            return queryset.filter(user_id=user_id)
+
+        return queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -44,12 +50,18 @@ class FavoriteCollectionViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
-        return FavoriteCollection.objects.filter(
-            user=self.request.user
-        ).select_related(
+        queryset = FavoriteCollection.objects.select_related(
             "collection"
         )
 
+        # Favoritos são públicos: permite consultar os de qualquer usuário
+        # via ?user=<id>. Sem esse parâmetro, retorna os do usuário logado.
+        user_id = self.request.query_params.get("user")
+
+        if user_id:
+            return queryset.filter(user_id=user_id)
+
+        return queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(

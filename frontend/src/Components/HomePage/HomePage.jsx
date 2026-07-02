@@ -118,19 +118,57 @@ function CollectionCard({ collection, favoriteCollections, onToggleFavorite }) {
 
 function HorizontalScroll({ children }) {
   const ref = useRef(null);
-  const scroll = () => {
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateArrows = () => {
+    const el = ref.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    updateArrows();
+    const el = ref.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateArrows);
+    window.addEventListener("resize", updateArrows);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      window.removeEventListener("resize", updateArrows);
+    };
+  }, [children]);
+
+  const scrollLeft = () => {
+    ref.current?.scrollBy({ left: -220, behavior: "smooth" });
+  };
+
+  const scrollRight = () => {
     ref.current?.scrollBy({ left: 220, behavior: "smooth" });
   };
+
   return (
     <div className="scroll-wrapper">
+      {canScrollLeft && (
+        <button className="arrow-btn arrow-btn-left" onClick={scrollLeft} aria-label="Anterior">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+      )}
+
       <div ref={ref} className="scroll-track">
         {children}
       </div>
-      <button className="arrow-btn" onClick={scroll} aria-label="Próximo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
+
+      {canScrollRight && (
+        <button className="arrow-btn arrow-btn-right" onClick={scrollRight} aria-label="Próximo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

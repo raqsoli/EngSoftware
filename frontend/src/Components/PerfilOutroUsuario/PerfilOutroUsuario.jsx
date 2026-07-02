@@ -224,27 +224,28 @@ export default function OtherUserProfilePage() {
     carregar();
   }, [id]);
 
-  // Favoritos carregados só quando a aba é aberta
+  // Favoritos carregados só quando a aba é aberta.
+  // Favoritos são públicos: usamos ?user=<id> para buscar os favoritos
+  // do usuário visitado (não do usuário logado).
   useEffect(() => {
     if (activeTab !== "favoritos") return;
     const carregarFavoritos = async () => {
       try {
         const [favItemsRes, favColsRes] = await Promise.all([
-          apiFetch("/api/favorite-items/"),
-          apiFetch("/api/favorite-collections/"),
+          apiFetch(`/api/favorite-items/?user=${id}`),
+          apiFetch(`/api/favorite-collections/?user=${id}`),
         ]);
 
         if (favItemsRes.ok) {
           const data = await favItemsRes.json();
           const list = Array.isArray(data) ? data : data.results ?? [];
-          // Filtra apenas os favoritos do usuário visitado
-          setFavoriteItems(list.filter((f) => f.item?.owner_id === Number(id)).map((f) => f.item));
+          setFavoriteItems(list.map((f) => f.item));
         }
 
         if (favColsRes.ok) {
           const data = await favColsRes.json();
           const list = Array.isArray(data) ? data : data.results ?? [];
-          setFavoriteCollections(list.filter((f) => f.collection?.owner_id === Number(id)).map((f) => f.collection));
+          setFavoriteCollections(list.map((f) => f.collection));
         }
       } catch {}
     };

@@ -15,6 +15,8 @@ class CollectionSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    owner_avatar = serializers.SerializerMethodField()
+
     hearts_count = serializers.SerializerMethodField()
 
     images = serializers.SerializerMethodField()
@@ -22,6 +24,20 @@ class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
         fields = "__all__"
+
+    def get_owner_avatar(self, obj):
+
+        request = self.context.get("request")
+
+        profile = getattr(obj.owner, "profile", None)
+
+        if not profile or not profile.image:
+            return None
+
+        if request:
+            return request.build_absolute_uri(profile.image.url)
+
+        return profile.image.url
 
     def get_hearts_count(self, obj):
         return FavoriteCollection.objects.filter(
