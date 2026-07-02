@@ -1,3 +1,5 @@
+# Serializer conversa com o banco via ORM do Django 
+
 from django.db import models
 from django.contrib.auth.models import User
 from items.models import Item

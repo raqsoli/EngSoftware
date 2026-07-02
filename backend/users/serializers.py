@@ -17,6 +17,7 @@ def validate_custom_password(password):
 
     return password
 
+# Usado no cadastro (POST /api/register)
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -38,6 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
+        # create_user faz o hash da senha
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
@@ -46,6 +48,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
+# Ver editar o proprio perfil
 class ProfileSerializer(serializers.ModelSerializer):
 
     image = serializers.ImageField(
@@ -88,7 +91,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
-
+# Pra quando vc visita o perfil de outra pessoa
 class PublicProfileSerializer(serializers.ModelSerializer):
     """
     Serializer para dados PÚBLICOS de qualquer usuário

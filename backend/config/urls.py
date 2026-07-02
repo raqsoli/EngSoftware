@@ -1,3 +1,6 @@
+# Decide qual app trata a rota
+# urls.py dentro de cada app decide qual view trata a rota
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import (

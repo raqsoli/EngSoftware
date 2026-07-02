@@ -48,6 +48,8 @@ export async function apiFetch(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...fetchOptions,
     headers,
+    cache: "no-store", // evita que o navegador reaproveite respostas antigas
+                         // (ex: /api/profile/ de um usuário anterior) ao trocar de conta
   });
 
   return response;

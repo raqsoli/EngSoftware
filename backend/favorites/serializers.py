@@ -1,3 +1,4 @@
+# Converte JSON para objetos Python e vice-versa
 from rest_framework import serializers
 
 from .models import (
