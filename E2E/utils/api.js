@@ -35,6 +35,18 @@ export async function obterTokens(request, usuario) {
   return res.json();
 }
 
+export async function obterPerfil(request, accessToken) {
+  const res = await request.get(`${API_BASE_URL}/api/profile/`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok()) {
+    throw new Error(`Falha ao buscar perfil de teste: ${res.status()}`);
+  }
+
+  return res.json();
+}
+
 export async function criarColecao(request, accessToken, dados) {
   const res = await request.post(`${API_BASE_URL}/api/collections/`, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -56,10 +68,11 @@ export async function prepararUsuarioComColecao(request, prefixo) {
   const usuario = gerarUsuarioUnico(prefixo);
   await registrarUsuario(request, usuario);
   const tokens = await obterTokens(request, usuario);
+  const perfil = await obterPerfil(request, tokens.access);
 
   const colecao = await criarColecao(request, tokens.access, {
     name: `Coleção E2E ${Date.now()}`,
   });
 
-  return { usuario, tokens, colecao };
+  return { usuario, tokens, perfil, colecao };
 }
